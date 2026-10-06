@@ -14,7 +14,7 @@ description: >
   domain model, C4, roadmap, compliance matrix, or any request to think a
   product through before building.
 metadata:
-  version: "1.5.0"
+  version: "1.7.0"
   alias: Predify
 compatibility: >
   Needs a host that can launch sub-agents, search the public web, and emit
@@ -115,7 +115,9 @@ The orchestrator then:
 
 If the sub-agent returns fewer than two or more than four questions, send the relay back and tell it to correct the count. Do not rewrite the questions yourself.
 
-A sub-agent that can settle a point by searching returns `NEED_RESEARCH` instead of asking the user. The orchestrator launches a Research sub-agent and passes the findings back. Only a remaining gap becomes `NEED_USER`.
+A sub-agent that can settle a point by searching returns `NEED_RESEARCH` instead of asking the user. The orchestrator launches a Research sub-agent and passes the findings file it wrote. Only a remaining gap becomes `NEED_USER`.
+
+Sub-agents that produce findings write them under `prdfy-spec/findings/`. They still do not edit `memory.md`. Pass those files onward. Do not retype them into the brief.
 
 ### Sub-agents
 
@@ -123,12 +125,12 @@ Each role is its own skill. Launch a sub-agent and tell it to read and follow th
 
 | Sub-agent | Skill | Does the work |
 | --- | --- | --- |
-| Research | `prdfy-research` | Searches and returns sourced findings |
-| Module | `prdfy-module` | Runs one module and proposes questions or a close |
+| Research | `prdfy-research` | Searches and writes `findings/research-<mode>.md` |
+| Module | `prdfy-module` | Runs one module and writes `findings/module-<name>.md` on close |
 | Writer | `prdfy-writer` | Writes one deliverable file, except the C4 model |
 | C4 | `prdfy-c4` | Writes the four-level C4 model |
-| Verifier | `prdfy-verifier` | Checks that file and does not edit it |
-| Review | `prdfy-review` | Returns the two closing questions |
+| Verifier | `prdfy-verifier` | Writes `findings/verify-<deliverable>.md` and does not edit the deliverable |
+| Review | `prdfy-review` | Writes `findings/review.md` and returns the two closing questions |
 
 Pass the memory file, the latest user words, and the skill path. Do not pass a summary in place of the user's words when the exact wording matters. A Module or Writer sub-agent that proposes a decision row returns it. The orchestrator writes the row into memory when the user confirms it.
 
@@ -180,7 +182,7 @@ Create `prdfy-spec/memory.md` when it does not exist, then launch the Vision Mod
 
 For the active module:
 
-1. Launch Research when this brief says to search, or when the Module sub-agent returns `NEED_RESEARCH`. Pass the findings back.
+1. Launch Research when this brief says to search, or when the Module sub-agent returns `NEED_RESEARCH`. Pass the markdown file it wrote.
 2. Launch the Module sub-agent with the brief, the memory file, the research, and the user's latest words.
 3. On `NEED_USER`, run the relay. Then launch that same module again with the answer.
 4. Repeat until it returns `MODULE_READY`, or the user says to skip.
@@ -198,17 +200,15 @@ After the user confirms Architectural Boundaries, launch one Research sub-agent 
 - Market dynamics: buyer, switching cost, and the words the category already uses.
 - Compliance: obligations already found, plus any duty the confirmed scope newly implies.
 
-Pass that brief to every Writer. Where research contradicts the user, the Writer keeps the user's decision and notes the contradiction. It does not silently correct the product. A gap that only the user can close is a relay, not a guess.
+Pass that findings folder to every Writer. Where research contradicts the user, the Writer keeps the user's decision and notes the contradiction. It does not silently correct the product. A gap that only the user can close is a relay, not a guess.
 
-### 4. Write the seven deliverables
+### 4. Write the documents
 
-Launch Writers only after module six is confirmed, or earlier if the user explicitly demands a draft. An early draft still labels every skipped exit item as an assumption.
+Findings files are notes. They do not replace the specification. After module six is confirmed, or earlier if the user explicitly demands a draft, create every document below. An early draft still labels every skipped exit item as an assumption.
 
-Each Writer produces one file. Give it the memory file, the research brief, and the heading contract for that file only. On `NEED_USER`, relay, write the answer into memory, then resume that Writer with the answer. Also pass the answer to any Writer whose file depends on the same fact. Writers do not edit `memory.md`. The decision-log deliverable is a copy of the Decisions section, not a second source of truth.
+Launch one Writer per file, following `prdfy-writer`. Give it the memory file, `prdfy-spec/findings/`, and the path to write. On `NEED_USER`, relay, write the answer into memory, then resume that Writer. Also pass the answer to any Writer whose document depends on the same fact. Writers do not edit `memory.md` or the findings files. The decision log is a copy of the Decisions section.
 
-When the host can write files, the Writers create `prdfy-spec/` and these files. Otherwise each Writer returns its section and the orchestrator presents them in this order.
-
-| File | Deliverable |
+| File | Document |
 | --- | --- |
 | `00-decision-log.md` | Decisions captured during the interview |
 | `01-business-plan.md` | Business plan and value proposition |
@@ -217,10 +217,11 @@ When the host can write files, the Writers create `prdfy-spec/` and these files.
 | `04-strategy-roadmap.md` | Strategy and product roadmap |
 | `05-risk-compliance.md` | Risk management and compliance matrix |
 | `06-domain-architecture.md` | Domain architecture |
-| `07-c4-architecture.md` | C4 model, levels 1–4 |
-| `README.md` | Index, open assumptions, and source list |
+| `README.md` | Index of the documents, open assumptions, and sources |
 
-Tell each Writer to follow `prdfy-writer` for the assigned file. Launch `prdfy-c4` for `07-c4-architecture.md` after `06-domain-architecture.md` exists, so the diagrams use the same aggregates. On `NEED_USER` from the C4 skill, relay, write the answer into memory, and resume `prdfy-c4`.
+Launch `prdfy-c4` for `07-c4-architecture.md` after `06-domain-architecture.md` exists, so the C4 diagrams use the same aggregates. On `NEED_USER` from the C4 skill, relay, write the answer into memory, and resume `prdfy-c4`.
+
+Do not finish while any of these files is missing. When the host cannot write files, each sub-agent returns its full document and the orchestrator presents them in the order above, with the C4 document last.
 
 ### 5. Verify, then hand back
 
@@ -232,4 +233,4 @@ Do not begin implementation planning on the next turn unless the user leaves thi
 
 ## Done
 
-The skill is done when the seven deliverables exist, every material claim has a source label, diagrams use only role names, no executable implementation has been written, and a Verifier has passed each file or the orchestrator has reported the file that failed twice. The orchestrator is the only voice the user heard.
+The skill is done when `prdfy-spec/` contains the decision log, business plan, PRD, specifications, roadmap, risk and compliance matrix, domain architecture, C4 architecture, and index, and `prdfy-spec/findings/` contains the research, module, verify, and review notes. Every material claim has a source label, diagrams use only role names, no executable implementation has been written, and a Verifier has passed each document or the orchestrator has reported the file that failed twice. The orchestrator is the only voice the user heard.

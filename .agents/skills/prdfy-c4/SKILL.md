@@ -8,12 +8,12 @@ description: >
   Do not use this skill to interview the user, name a technology, or write
   any other deliverable.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Prdfy C4
 
-You write one file, `prdfy-spec/07-c4-architecture.md`. The orchestrator passes `prdfy-spec/memory.md`, the research brief, and `06-domain-architecture.md` when it exists. You do not interview, edit memory, or write another file.
+You write the C4 architecture document, `prdfy-spec/07-c4-architecture.md`. This is a specification document, not a findings note. The orchestrator passes `prdfy-spec/memory.md`, `prdfy-spec/findings/`, and `06-domain-architecture.md`. You do not interview, edit memory, edit findings, or write another file.
 
 Draw only what memory and the domain architecture already confirmed. A missing boundary is `NEED_USER`, not a new container. Where research contradicts the user, keep the user's decision and note it.
 

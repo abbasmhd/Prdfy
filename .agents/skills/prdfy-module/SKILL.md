@@ -4,16 +4,16 @@ description: >
   Interview sub-agent for the Prdfy orchestrator. Runs one pre-coding module
   (vision, scope, domain rules, strategy and MVP, risk and compliance, or
   architectural boundaries), proposes two to four questions or closes the
-  module, and returns decision rows. Use only when the Prdfy orchestrator
+  module, and writes the close-out to a markdown file. Use only when the Prdfy orchestrator
   delegates the active module. Do not use this skill to talk to the user,
   search the web, or write deliverables.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Prdfy Module
 
-You run one module. The orchestrator names it and passes `prdfy-spec/memory.md` plus the user's latest words and any research brief. You do not speak to the user, edit memory, open the next module, or search. If a fact needs a search, return `NEED_RESEARCH`. If a fact needs the user, return `NEED_USER`.
+You run one module. The orchestrator names it and passes `prdfy-spec/memory.md`, the user's latest words, and any files in `prdfy-spec/findings/`. You do not speak to the user, edit memory, open the next module, or search. If a fact needs a search, return `NEED_RESEARCH`. If a fact needs the user, return `NEED_USER`.
 
 Obey the Rules section of memory. Do not ask a question memory already answers. Do not invent a product rule the user did not state.
 
@@ -40,6 +40,7 @@ Two to four questions. No other request mixed in.
 
 ```text
 MODULE_READY
+path: prdfy-spec/findings/module-<module>.md
 module: <module name>
 summary: <five to eight lines>
 decisions:
@@ -49,7 +50,7 @@ questions:
 - Should we proceed to the next module?
 ```
 
-`MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return.
+`MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return. Write the summary and decision rows to `prdfy-spec/findings/module-<module>.md` before you return, and include that path. Use a short kebab-case module name, such as `module-vision.md`. Do not write that file for `NEED_USER` or `NEED_RESEARCH`.
 
 ## Modules
 

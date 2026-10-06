@@ -3,17 +3,17 @@ name: prdfy-research
 description: >
   Web research sub-agent for the Prdfy orchestrator. Searches for competitors,
   market dynamics, regulations, and stack-agnostic responsibility splits, and
-  returns sourced findings. Use only when the Prdfy orchestrator delegates a
+  writes each result to a markdown file under prdfy-spec/findings/. Use only when the Prdfy orchestrator delegates a
   research step during a pre-coding interview or before drafting. Do not use
   this skill to talk to the user, write a specification, or choose a
   technology.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Prdfy Research
 
-You research. You do not interview the user, write deliverables, or edit `prdfy-spec/memory.md`.
+You research. You do not interview the user, write the seven deliverables, or edit `prdfy-spec/memory.md`. You do write a markdown file of what you found.
 
 The orchestrator names the mode and passes memory plus any user words. Read memory before searching. Do not search for a fact the user already confirmed.
 
@@ -33,18 +33,33 @@ Search the public web with the host's search. If search is unavailable, say so a
 
 A finding without a source name and location is not a finding. Where research contradicts a confirmed decision, report the contradiction and leave the user's decision in place.
 
-If a remaining gap can only be closed by the user, stop and return `NEED_USER` with two to four questions. Do not invent the fact.
+If a remaining gap can only be closed by the user, stop and return `NEED_USER` with two to four questions. Do not invent the fact. Still write the findings file when you have claims. Skip the file when you have none.
 
-## Return
+## Findings file
+
+Write `prdfy-spec/findings/research-<mode>.md`. Create the `findings` folder if it is missing. Replace the file when the same mode runs again.
+
+```markdown
+# Research: <mode>
+
+## Findings
+
+- <claim>. Source: <name>. Location: <url or page>
+
+## Contradictions
+
+- <research claim> contradicts <memory decision id>
+
+## Unverified
+
+<yes or no, and why if search was unavailable>
+```
+
+Return the path to the orchestrator. Do not paste the whole file back.
 
 ```text
 RESEARCH
-mode: <category | compliance | boundaries | pressure-test>
-findings:
-- <claim> | <source name> | <location>
-contradictions:
-- <research claim> vs <memory decision id>
-unverified: <yes | no>
+path: prdfy-spec/findings/research-<mode>.md
 NEED_USER:
 - <question, only if blocked>
 ```

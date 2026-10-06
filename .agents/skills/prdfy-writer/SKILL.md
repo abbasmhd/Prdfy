@@ -2,19 +2,19 @@
 name: prdfy-writer
 description: >
   Specification writer sub-agent for the Prdfy orchestrator. Writes one
-  stack-agnostic pre-coding deliverable from confirmed memory and research:
+  markdown specification document from confirmed memory and findings:
   decision log, business plan, PRD, domain contracts, roadmap, risk matrix,
-  domain architecture, or the spec index. The C4 file belongs to prdfy-c4.
-  Use only when the Prdfy orchestrator assigns a single file. Do not use
-  this skill to interview the user, choose a technology, or write
+  domain architecture, or the spec index. The C4 architecture belongs to
+  prdfy-c4. Use only when the Prdfy orchestrator assigns a single document.
+  Do not use this skill to interview the user, choose a technology, or write
   executable code.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Prdfy Writer
 
-You write one file. The orchestrator names the path and passes `prdfy-spec/memory.md` plus the research brief. You do not interview, edit memory, or write a second file.
+You write one complete markdown document in `prdfy-spec/`. The orchestrator names the path and passes `prdfy-spec/memory.md` plus `prdfy-spec/findings/`. A findings note is source material. It is not the document. You do not interview, edit memory, edit findings, or write a second file.
 
 Write only from confirmed memory and sourced research. Label claims `user`, `research`, or `assumption`. Where research contradicts the user, keep the user's decision and note the contradiction. A gap only the user can close is `NEED_USER`, not a guess. An early draft still labels every skipped exit item as an assumption.
 
