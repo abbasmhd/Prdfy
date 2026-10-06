@@ -14,7 +14,7 @@ description: >
   domain model, C4, roadmap, compliance matrix, or any request to think a
   product through before building.
 metadata:
-  version: "1.3.0"
+  version: "1.5.0"
   alias: Predify
 compatibility: >
   Needs a host that can launch sub-agents, search the public web, and emit
@@ -119,14 +119,20 @@ A sub-agent that can settle a point by searching returns `NEED_RESEARCH` instead
 
 ### Sub-agents
 
-| Sub-agent | Does the work | Never |
-| --- | --- | --- |
-| Research | Searches the public web and returns findings with sources | Asks the user, writes deliverables |
-| Module | Reads one module brief and the memory file, proposes decision rows and the next questions, or closes the module | Speaks to the user, opens the next module, edits memory |
-| Writer | Writes one deliverable file from the confirmed log and research | Interviews, chooses a technology |
-| Verifier | Checks one deliverable against these rules | Rewrites the file |
+Each role is its own skill. Launch a sub-agent and tell it to read and follow that skill. Do not follow the sub-agent skill yourself.
 
-Launch them through the host's sub-agent mechanism. Pass the memory file, the latest user words, and the section of this skill that applies. Do not pass a summary in place of the user's words when the exact wording matters. A sub-agent that proposes a decision row returns it to the orchestrator. The orchestrator writes the row into memory when the user confirms it.
+| Sub-agent | Skill | Does the work |
+| --- | --- | --- |
+| Research | `prdfy-research` | Searches and returns sourced findings |
+| Module | `prdfy-module` | Runs one module and proposes questions or a close |
+| Writer | `prdfy-writer` | Writes one deliverable file, except the C4 model |
+| C4 | `prdfy-c4` | Writes the four-level C4 model |
+| Verifier | `prdfy-verifier` | Checks that file and does not edit it |
+| Review | `prdfy-review` | Returns the two closing questions |
+
+Pass the memory file, the latest user words, and the skill path. Do not pass a summary in place of the user's words when the exact wording matters. A Module or Writer sub-agent that proposes a decision row returns it. The orchestrator writes the row into memory when the user confirms it.
+
+Do not substitute a general research, brainstorming, PRD, or C4 skill. Those skills talk to the user, name technologies, or continue into implementation. `prdfy-c4` is the C4 skill for this contract.
 
 Module work stays in order. Research for the active module finishes before the Module sub-agent proposes questions. Writers start only after Architectural Boundaries is confirmed, and each writer may run at the same time as the others. A Verifier starts only after its Writer finishes. On a failed check, send that Writer back once with the findings. If it fails again, stop that file and tell the user. Do not fix the file yourself.
 
@@ -160,7 +166,7 @@ C4 containers come from this list. If a capability does not fit, name the role (
 
 ## Execution
 
-The orchestrator follows this sequence and delegates every product step. It reads and updates `prdfy-spec/memory.md` itself. The module sections below are briefs for the Module sub-agent, not questions for the orchestrator to ask on its own.
+The orchestrator follows this sequence and delegates every product step. It reads and updates `prdfy-spec/memory.md` itself. Module briefs, deliverable contracts, and checklists live in the sub-agent skills.
 
 ### 1. Open the interview
 
@@ -182,81 +188,7 @@ For the active module:
 6. Write the confirmed rows into memory. Show the summary and those new rows, plus the two closing questions the sub-agent supplied: what to correct, and whether to proceed. Suggest up to four answers under each of those questions too. Do not attach the next module.
 7. Relay the reply. Start the next module only after the user proceeds.
 
-`MODULE_READY` contains the summary, the new log rows, and those two closing questions. It is not permission to draft.
-
-#### Vision
-
-Learn who hurts, what changes if this works, who pays, and what success means.
-
-Draw from questions like these, and do not ask ones the user already closed:
-
-- Who feels the problem, and what do they do today when it shows up?
-- What outcome is different if the product works?
-- Who pays, and why would they switch from the current alternative?
-- What is success in one sentence?
-
-Search for the category name buyers use, substitute products, and the complaints those substitutes attract.
-
-Exit when you can name the actor, the pain, the outcome, the payer, and a success sentence.
-
-#### Scope
-
-Learn the first boundary. A product that includes everyone includes no one.
-
-- Who is served in the first release, and who waits?
-- Which workflows are in, and which are explicitly out?
-- What must this product never do?
-- Is this one product, or several actors sharing a platform?
-
-Exit with an in-scope workflow list, an out-of-scope list, and a release boundary.
-
-#### Domain Rules
-
-Learn the nouns and the facts that must always be true. This module produces language the later contracts will reuse. Do not invent a rule the user did not state. Ask for it.
-
-- What are the core nouns, and which words are they not allowed to mean?
-- Which decisions may the product make, and which stay with a person?
-- What happens on conflict, cancellation, expiry, or partial completion?
-- Which statement must remain true no matter which screen or integration is involved?
-
-Exit with a glossary of the core nouns and at least three invariants, or a logged assumption that the rules are still unknown.
-
-#### Strategy and MVP
-
-Learn the smallest slice that can falsify the value proposition. Sequencing is a learning plan, not a feature dump.
-
-- What is the smallest complete workflow that proves the value proposition?
-- What is deferred, and which observation would pull it forward?
-- How will you know the MVP worked, in an observable signal?
-- What dependency, regulation, or learning forces the order?
-
-Exit with an MVP slice, a deferred list, and a success signal.
-
-#### Risk and Compliance
-
-Learn how the product can harm people, the business, or a legal duty. Search before asking, using the domain and the jurisdictions the user named. If jurisdiction is unknown, ask that before searching for statutes.
-
-Search for regulations and industry duties that plausibly apply. Record the source. If sources disagree or you are unsure, say so. Do not give legal advice.
-
-- What information is sensitive, and who may see it?
-- Which jurisdictions and regulated activities apply?
-- What harm follows if the product is wrong, unavailable, or abused?
-- What must be reconstructable after the fact, and by whom?
-
-Exit with data sensitivity, jurisdiction or an explicit unknown, and the top risks.
-
-#### Architectural Boundaries
-
-Learn what sits inside the product, what is delegated, and where trust changes. Talk about consistency and trust, not technologies.
-
-- Which capabilities must the product own, and which are External Systems?
-- Where must a fact be consistent immediately, and where may it lag?
-- What are the trust boundaries among the public actor, the operator, partners, and external systems?
-- What qualitative expectations for volume, responsiveness, or availability should change a boundary?
-
-Search for how comparable products split responsibilities. Describe the pattern in the terminology table. Do not copy a vendor reference architecture into the spec.
-
-Exit with an inside/outside list, consistency expectations, and trust boundaries.
+`MODULE_READY` contains the summary, the new log rows, and those two closing questions. It is not permission to draft. The Module sub-agent follows `prdfy-module`, which holds the six briefs: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries.
 
 ### 3. Research before drafting
 
@@ -288,137 +220,13 @@ When the host can write files, the Writers create `prdfy-spec/` and these files.
 | `07-c4-architecture.md` | C4 model, levels 1–4 |
 | `README.md` | Index, open assumptions, and source list |
 
-Use the heading structures below. Identifier schemes are `FR-` functional requirements, `NFR-` non-functional requirements, `INV-` invariants, `CMD-` commands, `QRY-` queries, `EVT-` domain events, `RSK-` risks, and `D-` decisions.
-
-#### Business plan and value proposition
-
-- Problem and who feels it
-- Value proposition in one sentence: for whom, what changes, unlike which alternative
-- Payer and user, kept distinct when they differ
-- Alternatives and why they fail, each tied to research
-- Market notes with sources
-- How value becomes revenue, in business language
-- Success metrics taken from the Vision and MVP modules
-- Assumptions
-
-#### Product requirements document
-
-- Problem statement
-- Goals and non-goals
-- Actors
-- Jobs to be done
-- Journeys as numbered narratives, not screen layouts
-- Functional requirements: id, statement, actor, journey, acceptance observation
-- Non-functional requirements as observable qualities (responsiveness, recoverability, privacy, auditability) with no technology names
-- Out of scope
-- Open questions
-
-#### Specifications and domain contracts
-
-- Ubiquitous language, one meaning per term
-- Invariants, each with the rule and the reason
-- Commands: name, actor, preconditions, postconditions
-- Queries: name, actor, the question answered
-- Domain events: name, and the fact that became true
-- Policies that react to events
-- Lifecycles for the aggregates that move through states
-- Contracts between actors: what each side guarantees
-
-Write conditions as sentences. Do not write signatures, types, or request bodies.
-
-#### Strategy and product roadmap
-
-- MVP definition and the belief it is meant to test
-- Now, Next, and Later, mapped to scope decisions
-- Dependencies between bets
-- Signal that advances a later bet, and signal that kills it
-- Explicit non-roadmap: items the scope module excluded
-
-#### Risk management and compliance matrix
-
-Use one table:
-
-| ID | Risk | Category | Likelihood | Impact | Mitigation | Owner | Source | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-Category is one of market, product, operational, compliance, or misuse. Likelihood and impact are low, medium, or high.
-
-Then a compliance table:
-
-| Jurisdiction | Obligation | Design response | Confidence | Source |
-| --- | --- | --- | --- | --- |
-
-Confidence is high only when a primary source was retrieved. State that the table informs product scope and is not legal advice.
-
-#### Domain architecture
-
-- Bounded contexts and the ubiquitous language each one owns
-- Context relationships: partnership, customer-supplier, conformist, anticorruption, or shared kernel
-- A Mermaid flowchart of the context map
-- Aggregates and the invariants they protect
-- Which context may change which facts
-- The published language used across a boundary
-
-#### C4 model
-
-Produce four levels, in order, each with a purpose paragraph, one Mermaid diagram, a short narrative, and the boundaries considered and rejected. Use the terminology table for every box that is not a person or an external organization.
-
-- **Level 1, System Context.** People and external organizations around the product as one system.
-- **Level 2, Containers.** Deployable or runnable roles inside the system. Prefer fewer containers. Split a container only when a trust boundary, a consistency boundary, or an independent lifecycle requires it.
-- **Level 3, Components.** The parts inside each container that Level 2 does not already explain. Name them by domain responsibility.
-- **Level 4, Domain structure.** This level is the code-level view with the code removed. Use a Mermaid class diagram of aggregates, entities, value objects, policies, and domain events. Attributes are domain facts. Operations are domain actions in ubiquitous language. Do not add parameter lists, return types, visibility markers, or language stereotypes other than `Aggregate`, `Entity`, `Value Object`, `Policy`, and `Domain Event`.
-
-Start diagrams like this, then replace the placeholders from confirmed decisions:
-
-```mermaid
-C4Context
-title System Context for [Product]
-Person(actor, "[Primary Actor]", "[Job]")
-System(product, "[Product]", "[Outcome it creates]")
-System_Ext(external, "[External System]", "[Responsibility delegated]")
-Rel(actor, product, "[Action]")
-Rel(product, external, "[Fact or request exchanged]")
-```
-
-```mermaid
-C4Container
-title Containers for [Product]
-Person(actor, "[Primary Actor]", "[Job]")
-Container(client, "Interactive User Client", "Client role", "[What the actor does here]")
-Container(app, "Application Service", "Application role", "[Use cases it coordinates]")
-ContainerDb(state, "Relational State Store", "State role", "[Facts it retains]")
-ContainerQueue(broker, "Message Broker", "Messaging role", "[Facts it carries]")
-Rel(actor, client, "Uses")
-Rel(client, app, "Requests work")
-Rel(app, state, "Reads and records facts")
-Rel(app, broker, "Publishes domain events")
-```
-
-Omit a container the boundaries do not justify. A Message Broker with nothing asynchronous to say is noise.
-
-```mermaid
-classDiagram
-class AggregateName {
-  <<Aggregate>>
-  status
-  domainAction()
-}
-class ValueName {
-  <<Value Object>>
-  fact
-}
-AggregateName --> ValueName : role
-```
-
-Level 3 uses `C4Component` inside one container at a time. Repeat per container that has internal structure worth showing. Do not draw a component diagram that merely renames the container.
+Tell each Writer to follow `prdfy-writer` for the assigned file. Launch `prdfy-c4` for `07-c4-architecture.md` after `06-domain-architecture.md` exists, so the diagrams use the same aggregates. On `NEED_USER` from the C4 skill, relay, write the answer into memory, and resume `prdfy-c4`.
 
 ### 5. Verify, then hand back
 
-Launch a Verifier for each deliverable after its Writer finishes. The Verifier checks source labels, the heading contract, stack-agnostic role names, and that no executable implementation slipped in. It returns pass or fail with the location of each problem. It does not edit.
+Launch a Verifier, following `prdfy-verifier`, for each deliverable after its writer finishes. On a failure, resume the same skill once with those findings, then verify again. A second failure stops that file. Report it. Do not repair it in the orchestrator. A failed C4 file goes back to `prdfy-c4`, not to `prdfy-writer`.
 
-On a failure, resume the same Writer once with those findings, then verify again. A second failure stops that file. Report it. Do not repair it in the orchestrator.
-
-Then launch one Review sub-agent over the log, the research contradictions, and the verifier results. Ask the user the two questions it returns: which assumption to promote or reject, and which deliverable to revise. Relay the answer to the Writer for that deliverable, then verify that file again.
+Then launch one Review sub-agent following `prdfy-review`. Ask the user the two questions it returns. Relay the answer to the Writer for that deliverable, then verify that file again.
 
 Do not begin implementation planning on the next turn unless the user leaves this skill by asking for something else.
 

@@ -43,24 +43,24 @@ The skill is the [`.agents/skills/prdfy/`](.agents/skills/prdfy/) folder. The ho
 
 ### npx skills
 
-The [skills CLI](https://github.com/vercel-labs/skills) installs a skill from a git repo or a local folder. This repository also contains `skill-creator`, so pass `--skill prdfy` to install only Prdfy.
+The [skills CLI](https://github.com/vercel-labs/skills) installs a skill from a git repo or a local folder. This repository also contains `skill-creator`. Install Prdfy together with its sub-agent skills: `prdfy-research`, `prdfy-module`, `prdfy-writer`, `prdfy-c4`, `prdfy-verifier`, and `prdfy-review`.
 
 List what the repo offers:
 
 ```bash
-npx skills add owner/Prdfy --list
+npx skills add abbasmhd/Prdfy --list
 ```
 
 Install Prdfy for Cursor in the current project:
 
 ```bash
-npx skills add owner/Prdfy --skill prdfy -a cursor -y
+npx skills add abbasmhd/Prdfy --skill prdfy --skill prdfy-research --skill prdfy-module --skill prdfy-writer --skill prdfy-c4 --skill prdfy-verifier --skill prdfy-review -a cursor -y
 ```
 
 Install it for every project on this machine:
 
 ```bash
-npx skills add owner/Prdfy --skill prdfy -a cursor -g -y
+npx skills add abbasmhd/Prdfy --skill prdfy --skill prdfy-research --skill prdfy-module --skill prdfy-writer --skill prdfy-c4 --skill prdfy-verifier --skill prdfy-review -a cursor -g -y
 ```
 
 For Cursor, a project install lands in `.agents/skills/prdfy/`. A global install (`-g`) lands in `~/.cursor/skills/prdfy/`. Leave off `-y` if you want the CLI to ask which skill, which agent, and whether to symlink or copy.
@@ -68,7 +68,7 @@ For Cursor, a project install lands in `.agents/skills/prdfy/`. A global install
 Until this repo has a GitHub remote, point the CLI at the local folder:
 
 ```bash
-npx skills add /path/to/Prdfy --skill prdfy -a cursor -y
+npx skills add /path/to/Prdfy --skill prdfy --skill prdfy-research --skill prdfy-module --skill prdfy-writer --skill prdfy-c4 --skill prdfy-verifier --skill prdfy-review -a cursor -y
 ```
 
 If a symlink fails on Windows, add `--copy`. Other agents use the same command with their own `--agent` name, such as `claude-code`.
@@ -83,7 +83,7 @@ From this repo, copy the folder into the other project:
 
 ```bash
 mkdir -p /path/to/other-project/.agents/skills
-cp -R .agents/skills/prdfy /path/to/other-project/.agents/skills/prdfy
+cp -R .agents/skills/prdfy .agents/skills/prdfy-research .agents/skills/prdfy-module .agents/skills/prdfy-writer .agents/skills/prdfy-c4 .agents/skills/prdfy-verifier .agents/skills/prdfy-review /path/to/other-project/.agents/skills/
 ```
 
 Cursor also loads `.cursor/skills/prdfy/`. Claude Code loads `.claude/skills/prdfy/`. Use whichever directory that project already uses.
@@ -94,7 +94,7 @@ Copy it into your user skills directory:
 
 ```bash
 mkdir -p ~/.agents/skills
-cp -R .agents/skills/prdfy ~/.agents/skills/prdfy
+cp -R .agents/skills/prdfy .agents/skills/prdfy-research .agents/skills/prdfy-module .agents/skills/prdfy-writer .agents/skills/prdfy-c4 .agents/skills/prdfy-verifier .agents/skills/prdfy-review ~/.agents/skills/
 ```
 
 The same folder works at `~/.cursor/skills/prdfy/` for Cursor and `~/.claude/skills/prdfy/` for Claude Code. On Windows, `~` is your user profile (`C:\Users\<you>`).
