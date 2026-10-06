@@ -43,32 +43,36 @@ The skill is the [`.agents/skills/prdfy/`](.agents/skills/prdfy/) folder. The ho
 
 ### npx skills
 
-The [skills CLI](https://github.com/vercel-labs/skills) installs a skill from a git repo or a local folder. This repository also contains `skill-creator`. Install Prdfy together with its sub-agent skills: `prdfy-research`, `prdfy-module`, `prdfy-writer`, `prdfy-c4`, `prdfy-verifier`, and `prdfy-review`.
-
 List what the repo offers:
 
 ```bash
 npx skills add abbasmhd/Prdfy --list
 ```
 
-Install Prdfy for Cursor in the current project:
+Install all skills for Cursor in the current project:
 
 ```bash
-npx skills add abbasmhd/Prdfy --skill prdfy --skill prdfy-research --skill prdfy-module --skill prdfy-writer --skill prdfy-c4 --skill prdfy-verifier --skill prdfy-review -a cursor -y
+npx skills add abbasmhd/Prdfy --skill '*' -a cursor -y
 ```
 
-Install it for every project on this machine:
+Install all skills for Cursor on every project on this machine:
 
 ```bash
-npx skills add abbasmhd/Prdfy --skill prdfy --skill prdfy-research --skill prdfy-module --skill prdfy-writer --skill prdfy-c4 --skill prdfy-verifier --skill prdfy-review -a cursor -g -y
+npx skills add abbasmhd/Prdfy --skill '*' -a cursor -g -y
 ```
 
-For Cursor, a project install lands in `.agents/skills/prdfy/`. A global install (`-g`) lands in `~/.cursor/skills/prdfy/`. Leave off `-y` if you want the CLI to ask which skill, which agent, and whether to symlink or copy.
-
-Until this repo has a GitHub remote, point the CLI at the local folder:
+Install all skills for every agent on this machine:
 
 ```bash
-npx skills add /path/to/Prdfy --skill prdfy --skill prdfy-research --skill prdfy-module --skill prdfy-writer --skill prdfy-c4 --skill prdfy-verifier --skill prdfy-review -a cursor -y
+npx skills add abbasmhd/Prdfy --all
+```
+
+For Cursor, a project install lands in `.agents/skills/`. A global install (`-g`) lands in `~/.cursor/skills/`. `--all` is global across agents and does not take `-a`. Leave off `-y` if you want the CLI to ask which skill, which agent, and whether to symlink or copy.
+
+To install from a local checkout instead:
+
+```bash
+npx skills add /path/to/Prdfy --skill '*' -a cursor -y
 ```
 
 If a symlink fails on Windows, add `--copy`. Other agents use the same command with their own `--agent` name, such as `claude-code`.
@@ -110,5 +114,3 @@ Start from a product idea, not from a request to write code. If a technology is 
 ## License
 
 Prdfy is licensed under the [MIT License](LICENSE).
-
-The bundled [skill-creator](.agents/skills/skill-creator/) skill comes from [anthropics/skills](https://github.com/anthropics/skills) and remains under the Apache License 2.0. See [its license](.agents/skills/skill-creator/LICENSE.txt).
