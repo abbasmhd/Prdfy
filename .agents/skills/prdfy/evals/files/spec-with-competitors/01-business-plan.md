@@ -14,8 +14,8 @@ The hall committee pays. Residents and one manager use it (user, D-002).
 
 ## Alternatives
 
-- Shared phone diary: two volunteers can promise the same slot (research, Village Halls Weekly).
-- Hallkeeper: priced per venue for commercial event spaces, which is more than a volunteer-run hall needs (research, Hallkeeper pricing page).
+- Community halls often use a shared paper or phone diary instead of software (research, Village Halls Weekly).
+- Hallkeeper sells per-venue subscriptions aimed at commercial event spaces (research, Hallkeeper pricing page).
 
 ## Market notes
 
@@ -23,7 +23,7 @@ Small venues call the category "venue booking software" (research, Hallkeeper).
 
 ## Revenue model
 
-Not applicable: the committee does not charge for the product (assumption, A-001).
+The hall committee pays; residents and one manager use the product (user, D-002). The committee does not charge for the product (assumption, A-001).
 
 ## Success metrics
 
