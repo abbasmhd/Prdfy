@@ -9,7 +9,7 @@ description: >
   orchestrator asks for verification after a writer finishes. Do not use this
   skill to rewrite a file or talk to the user.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   protocol: "1"
 ---
 
@@ -83,4 +83,4 @@ verdict: PASS | FAIL
 files: <the deliverables an issue names, for cross only>
 ```
 
-`PASS` requires every check to pass. One failed check is `FAIL`. Name the location so the writer can fix that spot. Do not include a rewritten paragraph. Do not suggest a technology.
+An issue is `major` when it breaks a check above, and `minor` when it is a wording or clarity note that breaks no check. `PASS` requires every check to pass. One `major` issue is `FAIL`. Minor issues alone still `PASS`. List them so a later revision can pick them up, but the writer is not relaunched for them. Name the location so the writer can fix that spot. Do not include a rewritten paragraph. Do not suggest a technology.

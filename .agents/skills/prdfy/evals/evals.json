@@ -17,9 +17,9 @@
     },
     {
       "id": 2,
-      "prompt": "Continue my prdfy run. prdfy-spec/memory.md is already there. Skip domain rules, I don't know them yet.",
+      "prompt": "Setup: copy the contents of evals/files/after-scope/ into prdfy-spec/ in the working folder, then act on this message.\n\nContinue my prdfy run. Skip domain rules, I don't know them yet.",
       "expected_output": "The Domain Rules module is relaunched with skip, proposes open assumptions for its exit items, writes its module file, and the orchestrator asks the two closing questions without opening Strategy and MVP.",
-      "files": ["evals/files/memory-after-scope.md"],
+      "files": ["evals/files/after-scope/memory.md"],
       "expectations": [
         "prdfy-spec/findings/module-domain-rules.md exists",
         "The Assumptions section of prdfy-spec/memory.md has at least one new A- row for Domain Rules with status open",
@@ -42,9 +42,9 @@
     },
     {
       "id": 4,
-      "prompt": "Continue my prdfy run. prdfy-spec/memory.md is already there. We're on risk and compliance now.",
+      "prompt": "Setup: copy the contents of evals/files/at-risk/ into prdfy-spec/ in the working folder, then act on this message.\n\nContinue my prdfy run. We're on risk and compliance now.",
       "expected_output": "Because no jurisdiction is in memory, the Research or Module sub-agent relays a question about jurisdiction and regulated activities instead of naming a statute.",
-      "files": ["evals/files/memory-at-risk.md"],
+      "files": ["evals/files/at-risk/memory.md"],
       "expectations": [
         "The reply asks which jurisdictions the product serves",
         "The reply asks two to four questions in total",
@@ -54,9 +54,9 @@
     },
     {
       "id": 5,
-      "prompt": "Continue my prdfy run. prdfy-spec/memory.md is already there. Actually, operators are out of scope for v1 — only residents and a single manager.",
+      "prompt": "Setup: copy the contents of evals/files/at-risk/ into prdfy-spec/ in the working folder, then act on this message.\n\nContinue my prdfy run. Actually, operators are out of scope for v1 — only residents and a single manager.",
       "expected_output": "The orchestrator does not edit D-003 in place. It relaunches the Scope module with revise D-003, writes the replacement row, marks D-003 superseded, and returns to Risk and Compliance.",
-      "files": ["evals/files/memory-at-risk.md"],
+      "files": ["evals/files/at-risk/memory.md"],
       "expectations": [
         "In prdfy-spec/memory.md, D-003 still exists with status superseded",
         "D-003's Superseded by cell names a new D- ID",
@@ -67,7 +67,7 @@
     },
     {
       "id": 6,
-      "prompt": "Act as the Prdfy orchestrator in the verify phase. prdfy-spec/ already holds memory.md, findings/research-category.md, and 01-business-plan.md. Verify 01-business-plan.md using the prdfy-verifier skill.",
+      "prompt": "Setup: copy the contents of evals/files/spec-with-competitors/ into prdfy-spec/ in the working folder, keeping the findings/ subfolder, then act on this message.\n\nAct as the Prdfy orchestrator in the verify phase. Verify prdfy-spec/01-business-plan.md using the prdfy-verifier skill.",
       "expected_output": "The verifier passes the business plan. Hallkeeper is a competitor supplied by a findings file, so naming it is allowed.",
       "files": [
         "evals/files/spec-with-competitors/memory.md",
@@ -83,9 +83,13 @@
     },
     {
       "id": 7,
-      "prompt": "let's continue prdfy",
+      "prompt": "Setup: copy the contents of evals/files/writing/ into prdfy-spec/ in the working folder, then act on this message.\n\nlet's continue prdfy",
       "expected_output": "The orchestrator reads Progress, says in one sentence that the run is in the writing phase, and launches writers only for the pending files 03 to 06, then C4, then the decision log and README pair.",
-      "files": ["evals/files/memory-writing.md"],
+      "files": [
+        "evals/files/writing/memory.md",
+        "evals/files/writing/01-business-plan.md",
+        "evals/files/writing/02-prd.md"
+      ],
       "expectations": [
         "The reply says in one sentence that the run is in the writing phase",
         "The orchestrator does not restart the interview or ask Vision questions",
