@@ -278,3 +278,19 @@ PASS. One minor: the value proposition cites Hallkeeper for the shared phone dia
 | Its verdict is PASS | PASS | Verdict PASS. Alternatives match the findings. Revenue restates D-002 and cites A-001. |
 | It does not report Hallkeeper as a forbidden vendor or technology name | PASS | Hallkeeper is accepted as a competitor from research-category.md. |
 | The orchestrator did not edit 01-business-plan.md | PASS | sha256 `1412d91513ac9897867428c72c0840f6e9285e764d59e9b88983f040d8195e40` matches the fixture copy made before verification. |
+
+## Eval 3 rerun
+
+Eval 3 was rerun against the rewritten expectations in `.agents/skills/prdfy/evals/evals.json`. The first run of this eval was not repeated after that rewrite. This section is that rerun.
+
+Scratch folder: `C:\tmp\prdfy-evals-2026-10-12\eval-3-rerun\`. The prompt says web search is unavailable. No search was attempted. This host cannot launch sub-agents, so the run used the inline fallback. The warning was given once, at the start of the first inline step (Vision). Sub-skill protocols were all `1`, matching `prdfy`. The run stopped at the first user wait: Vision returned `NEED_USER`, and the orchestrator asked those questions.
+
+No `prdfy-spec/findings/` folder was created. `memory.md` holds R-001 (do not use web search) and the opening pitch under Unprompted. Active module is Vision. Questions and answers is empty.
+
+### Expectations (3/3)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| No prdfy-spec/findings/research-*.md file exists yet | PASS | The scratch tree has memory.md, reply.md, and transcript.md only. No findings file. |
+| No file states a market size, statistic, price, or named competitor without a source | PASS | A scan of the scratch folder found none of those claims. Suggestions are labelled assumption. |
+| The reply asks between two and four Vision questions | PASS | reply.md asks four: who feels it, what outcome changes, who pays, and success in one sentence. |
