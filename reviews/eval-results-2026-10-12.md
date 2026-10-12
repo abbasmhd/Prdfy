@@ -302,3 +302,103 @@ No `prdfy-spec/findings/` folder was created. `memory.md` holds R-001 (do not us
 Unit tests: `uv run --python 3.11 --with pytest --with pyyaml pytest tests -q` — 21 passed. `tests/test_run_eval.py` raises `select()`, makes the pipe unreadable, and checks that `run_single_query` and `run_eval` raise `QueryUnobservable` instead of passing `should_trigger: false`. Another case still returns triggered when `select()` fails but the pipe can be read.
 
 Live `claude -p` did not reach a model. `claude` is 2.1.241. Nothing listens on `127.0.0.1:3001` (curl exit 7). One trigger-eval query, `prdfy: a marketplace for local tutors`, printed `[claude-code:unrecognized_model] {"model":"auto","query_source":"sdk"}` and had not exited after 20 seconds, so the process was stopped. The other 19 queries were not run. No trigger score. The prdfy skill description was not changed.
+
+## Sub-agent interview
+
+A real interview, with the orchestrator launching a fresh `generalPurpose` sub-agent for each product step (`run_in_background` false). Skills were read from `c:\repos\Prdfy\.agents\skills\`. Outputs were written only under `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\`. `PRDFY_AGENT_CMD` was not set. Trigger evals were not run. Nothing was committed or pushed. The nine deliverables were not written. Started 2026-10-12T05:35:20Z. Stopped 2026-10-12T06:23:46Z, before 90 minutes.
+
+### Whether sub-agents launched
+
+Yes. Protocols were all `1` before the first launch. Each completed step was a separate sub-agent. The interview was not continued inline.
+
+| Step | Skill followed | Result |
+| --- | --- | --- |
+| Vision, first questions | `prdfy-module` | `NEED_USER` |
+| Vision, after those answers | `prdfy-module` | `NEED_RESEARCH` category |
+| Category research | `prdfy-research` | `research-category.md` |
+| Vision, after category research | `prdfy-module` | `NEED_USER`, then a later launch returned `MODULE_READY` |
+| Scope | `prdfy-module` | `NEED_USER`, then `MODULE_READY` |
+| Domain Rules | `prdfy-module` | `NEED_USER`, then `MODULE_READY` |
+| Strategy and MVP | `prdfy-module` | `NEED_USER`, then `MODULE_READY` |
+| Compliance research, before Risk questions | `prdfy-research` | `research-compliance.md` (jurisdiction not named; no statute) |
+| Risk and Compliance | `prdfy-module` | `NEED_USER`, then `NEED_RESEARCH` compliance |
+| Compliance research, run 2 | `prdfy-research` | `research-compliance-2.md` (explicit unknown; no statute) |
+| Risk and Compliance, after that file | `prdfy-module` | `MODULE_READY` |
+| Architectural Boundaries, first launch | `prdfy-module` | `NEED_RESEARCH` boundaries |
+| Boundaries research | `prdfy-research` | `research-boundaries.md` |
+| Architectural Boundaries, relaunch | `prdfy-module` | Launch aborted (`Subagent was aborted`) |
+| Same relaunch, one retry | `prdfy-module` | Launch aborted again |
+
+### How far
+
+Confirmed, and the user proceeded: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance.
+
+Architectural Boundaries is not confirmed. The boundaries research file exists. The module was not relaunched successfully after it, so there is no `module-architectural-boundaries.md`. Pressure-test research was not started. Phase in memory is still `interview`. Active module is Architectural Boundaries.
+
+### Contract breaks
+
+- The orchestrator did not write a deliverable. It wrote only `memory.md`.
+- The orchestrator did not ask its own questions. Relays used the sub-agent's questions and suggestions. Scripted answers were used where they covered the question. Anything the script did not cover was answered `Unknown`. Closing replies were `Nothing to correct` and `Yes, proceed`.
+- The orchestrator did not invent a decision. Decision rows are the rows each module returned.
+- No technology name appears under the temp `prdfy-spec/`.
+- Sub-agent protocol blocks were returned to the orchestrator. The host also showed a one-line summary for each sub-agent. Two of those lines address the user directly ("needs your answers"): the first Domain Rules launch and the first Strategy and MVP launch. Those summaries did not add questions beyond the relay block.
+- Modules closed several `Unknown` answers in the summary and did not return `A-` rows for them. The orchestrator did not fill those rows in.
+
+### Paths
+
+Memory: `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\memory.md`
+
+Findings:
+
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-category.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-compliance.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-compliance-2.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-boundaries.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\module-vision.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\module-scope.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\module-domain-rules.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\module-strategy-and-mvp.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\module-risk-and-compliance.md`
+
+## Sub-agent interview (continued)
+
+The section above records the stop after two aborted Architectural Boundaries relaunches. This continuation started from the same temp memory while that stop was still the state on disk: Phase `interview`, Active module Architectural Boundaries, decisions through D-016, and no `module-architectural-boundaries.md`. Protocols were still all `1`. The interview was not run inline. Trigger evals were not run. Nothing was committed or pushed. The nine deliverables were not written.
+
+### Whether sub-agents launched
+
+Yes. Each product step in this continuation was a separate `generalPurpose` sub-agent (`run_in_background` false). Each was told to read the named skill under `c:\repos\Prdfy\.agents\skills\` and to write only under the temp `prdfy-spec/`.
+
+| Step | Skill followed | Result |
+| --- | --- | --- |
+| Architectural Boundaries, questions | `prdfy-module` | `NEED_USER` (four questions). Agent `f2e9f0f2-230c-434b-b6b2-a02aa75c3de3`. |
+| Architectural Boundaries, after the scripted answers | `prdfy-module` | `MODULE_READY`. Agent `c9dff845-49d4-4733-be84-ef2ce8185c50`. Wrote `module-architectural-boundaries.md`. |
+| Pressure-test research | `prdfy-research` | `RESEARCH`. Agent `80176702-c4b9-4389-af36-30b6c81dedd0`. Wrote `research-pressure-test.md`. |
+
+`research-boundaries.md` was already on disk from the earlier orchestrator's research sub-agent before this module was relaunched. This continuation did not launch another boundaries research sub-agent.
+
+### How far
+
+Architectural Boundaries is confirmed. The module returned D-017 (the product owns booking requests and the slot record; payment stays with the hall's existing payment terminal, an External System) and D-018 (a booking confirmation must be consistent immediately). The summary matches the script, so the closing answers recorded were `Nothing to correct` and `Yes, proceed`. Where the script did not cover lag, the remaining trust boundaries, or a volume or availability expectation, the answer recorded was `Unknown`.
+
+Phase in memory is `pressure-test`. Active module is Architectural Boundaries. `research-pressure-test.md` exists. It names no statute; jurisdiction stays the explicit unknown in D-015. The nine deliverable files are still `pending` and were not written.
+
+### Contract breaks
+
+- The orchestrator did not write a deliverable. It wrote `memory.md` and this section.
+- The orchestrator did not ask questions of its own. The four questions and their suggestions came from the module relay. Answers came from the script, or `Unknown` where the script was silent.
+- The orchestrator did not invent a decision. D-017 and D-018 are the rows the module returned.
+- No programming language, UI framework, application framework, database engine, or infrastructure vendor was named by the orchestrator. Competitor names in the research files are market names from those searches.
+- The first boundaries module in this continuation returned `NEED_USER` while the boundaries research brief was not yet in its prompt, instead of `NEED_RESEARCH`. The brief file was produced by the earlier research sub-agent, then passed on the relaunch.
+- That module's host summary addressed the user ("needs you to decide"). The close-out summary also stated the confirmed boundaries in a user-visible line. The protocol blocks themselves were returned to the orchestrator.
+- The module put the `Unknown` answers in the summary and returned no `A-` rows for them. The orchestrator did not add those rows.
+
+### Paths
+
+Memory: `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\memory.md`
+
+New findings from this continuation:
+
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\module-architectural-boundaries.md`
+- `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-pressure-test.md`
+
+`research-boundaries.md` remains at `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-boundaries.md`.
