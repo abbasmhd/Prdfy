@@ -8,7 +8,7 @@ description: >
   this skill to talk to the user, write a specification, or choose a
   technology.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Prdfy Research
@@ -19,13 +19,13 @@ The orchestrator names the mode and passes memory plus any user words. Read memo
 
 ## Modes
 
-**Category.** What buyers call this space, which substitutes they use, and what those substitutes get wrong. Return three to five findings.
+**Category.** What buyers call this space, which substitutes they use, and what those substitutes get wrong. Return three to five findings. Name competitors and substitutes with a source. Do not recommend the technology they use.
 
-**Compliance.** Duties that plausibly apply to the domain and jurisdictions named in memory. If jurisdiction is missing, do not guess a statute. Return `NEED_USER` asking only for the jurisdiction. This is a design summary, not legal advice. If sources disagree, say so.
+**Compliance.** Duties that plausibly apply to the domain and jurisdictions named in memory. If jurisdiction is missing, do not guess a statute. Return `NEED_USER` with two questions: which jurisdictions the product serves, and which regulated activities it performs there, such as payments, health data, or minors' accounts. This is a design summary, not legal advice. If sources disagree, say so.
 
 **Boundaries.** How comparable products split responsibilities. Describe the split with role names: Interactive User Client, Application Service, Relational State Store, Message Broker, External System. Do not name a vendor, language, framework, or database, and do not paste a vendor reference architecture.
 
-**Pressure test.** Before drafting, check competitors and substitutes, buyer and switching cost, the words the category already uses, and any duty the confirmed scope newly implies.
+**Pressure test** (mode name `pressure-test`). Before drafting, check competitors and substitutes, buyer and switching cost, the words the category already uses, and any duty the confirmed scope newly implies.
 
 ## Rules
 
@@ -33,11 +33,11 @@ Search the public web with the host's search. If search is unavailable, say so a
 
 A finding without a source name and location is not a finding. Where research contradicts a confirmed decision, report the contradiction and leave the user's decision in place.
 
-If a remaining gap can only be closed by the user, stop and return `NEED_USER` with two to four questions. Do not invent the fact. Still write the findings file when you have claims. Skip the file when you have none.
+If a remaining gap can only be closed by the user, stop and return `NEED_USER` with two to four questions. Do not invent the fact.
 
 ## Findings file
 
-Write `prdfy-spec/findings/research-<mode>.md`. Create the `findings` folder if it is missing. Replace the file when the same mode runs again.
+Always write `prdfy-spec/findings/research-<mode>.md`, including when you found nothing or are blocked. When there are no findings, write "None" under Findings and say why. Use the mode names `category`, `compliance`, `boundaries`, and `pressure-test`. Create the `findings` folder if it is missing. Replace the file when the same mode runs again.
 
 ```markdown
 # Research: <mode>
@@ -55,11 +55,24 @@ Write `prdfy-spec/findings/research-<mode>.md`. Create the `findings` folder if 
 <yes or no, and why if search was unavailable>
 ```
 
-Return the path to the orchestrator. Do not paste the whole file back.
+Return one of these. Do not paste the whole file back.
 
 ```text
 RESEARCH
 path: prdfy-spec/findings/research-<mode>.md
-NEED_USER:
-- <question, only if blocked>
 ```
+
+```text
+NEED_USER
+module: research-<mode>
+blocked: <decision that cannot be made>
+questions:
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
+```
+
+Two to four questions, and zero to four suggestions under each. Do not suggest a jurisdiction memory does not support. Write the findings file before either return.

@@ -8,14 +8,14 @@ description: >
   Do not use this skill to interview the user, name a technology, or write
   any other deliverable.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Prdfy C4
 
 You write the C4 architecture document, `prdfy-spec/07-c4-architecture.md`. This is a specification document, not a findings note. The orchestrator passes `prdfy-spec/memory.md`, `prdfy-spec/findings/`, and `06-domain-architecture.md`. You do not interview, edit memory, edit findings, or write another file.
 
-Draw only what memory and the domain architecture already confirmed. A missing boundary is `NEED_USER`, not a new container. Where research contradicts the user, keep the user's decision and note it.
+Draw only what memory and the domain architecture already confirmed. A missing boundary is `NEED_USER`, not a new container. An `assumption` label cites an `A-` ID from memory. Do not create a new assumption or propose a decision. If the user skips your relay, memory will hold an `A-` row marked "Unknown". Leave that boundary out of the diagram and name the ID in the narrative. Where research contradicts the user, keep the user's decision and note it.
 
 ## Return
 
@@ -26,22 +26,26 @@ NEED_USER
 module: 07-c4-architecture.md
 blocked: <decision that cannot be made>
 questions:
-- <question>
-- <question>
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
 ```
 
-Two to four questions. Otherwise write the file and return:
+Two to four questions, and zero to four suggestions under each. Otherwise write the file and return:
 
 ```text
 WROTE
 path: prdfy-spec/07-c4-architecture.md
 assumptions:
-- <id used>
+- <A- ID cited>
 ```
 
 ## Rules
 
-Stay stack-agnostic. Every box that is not a person or an external organization uses a role name: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache. A domain noun is allowed only when memory defines it. Do not name a language, framework, database engine, or vendor.
+Stay stack-agnostic. Every box that is not a person or an external organization uses a role name: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache. A domain noun is allowed only when memory defines it. Do not name a language, framework, database engine, or infrastructure vendor, even when the user chose one. An integration the user requires may name its `System_Ext` box.
 
 Mermaid is the only notation. Do not emit Structurizr, PlantUML, or executable source.
 
@@ -78,7 +82,7 @@ Container(client, "Interactive User Client", "Client role", "[What the actor doe
 Container(app, "Application Service", "Application role", "[Use cases it coordinates]")
 ContainerDb(state, "Relational State Store", "State role", "[Facts it retains]")
 ContainerQueue(broker, "Message Broker", "Messaging role", "[Facts it carries]")
-Rel(actor, client, "Uses")
+Rel(actor, client, "[Action the actor takes]")
 Rel(client, app, "Requests work")
 Rel(app, state, "Reads and records facts")
 Rel(app, broker, "Publishes domain events")

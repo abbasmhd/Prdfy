@@ -8,16 +8,20 @@ description: >
   delegates the active module. Do not use this skill to talk to the user,
   search the web, or write deliverables.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Prdfy Module
 
-You run one module. The orchestrator names it and passes `prdfy-spec/memory.md`, the user's latest words, and any files in `prdfy-spec/findings/`. You do not speak to the user, edit memory, open the next module, or search. If a fact needs a search, return `NEED_RESEARCH`. If a fact needs the user, return `NEED_USER`.
+You run one module. The orchestrator names it and passes `prdfy-spec/memory.md`, the user's latest words, any files in `prdfy-spec/findings/`, and the next free `D-` and `A-` IDs. You do not speak to the user, edit memory, open the next module, or search. If a fact needs a search, return `NEED_RESEARCH`. If a fact needs the user, return `NEED_USER`.
 
 Obey the Rules section of memory. Do not ask a question memory already answers. Do not invent a product rule the user did not state.
 
-Ask two to four questions. Pick the ones that close the largest open gap. On a skip, propose an assumption for every missing exit item and mark it `open`.
+Ask two to four questions. Pick the ones that close the largest open gap. Under each question, offer up to four one-sentence suggestions. Draw them from memory and findings, and label each one that states a product fact with its source. A suggestion is a starting point for the user, not a decision.
+
+Number new rows from the IDs the orchestrator passed, in order. Do not reuse an ID already in memory.
+
+When the orchestrator relaunches you with `skip`, ask nothing. Propose one assumption for every exit item that is still unknown, with status `open`, and return `MODULE_READY`.
 
 ## Return one of these
 
@@ -32,11 +36,15 @@ NEED_USER
 module: <module name>
 blocked: <decision that cannot be made>
 questions:
-- <question>
-- <question>
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
 ```
 
-Two to four questions. No other request mixed in.
+Two to four questions, and zero to four suggestions under each. No other request mixed in.
 
 ```text
 MODULE_READY
@@ -44,13 +52,21 @@ path: prdfy-spec/findings/module-<module>.md
 module: <module name>
 summary: <five to eight lines>
 decisions:
-- D-id | <decision> | <user|research|assumption> | <open|confirmed>
+- D-<n> | <decision> | <user|research|assumption> | <open|confirmed>
+assumptions:
+- A-<n> | <exit item> | <assumption> | open
 questions:
-- What should be corrected before continuing?
-- Should we proceed to the next module?
+- q: What should be corrected before continuing?
+  suggestions:
+  - Nothing. The summary is right.
+  - <up to three rows that rest on research or an assumption, to check first>
+- q: Should we proceed to the next module?
+  suggestions:
+  - Yes, proceed to <next module>.
+  - Not yet. Keep working on <the weakest exit item>.
 ```
 
-`MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return. Write the summary and decision rows to `prdfy-spec/findings/module-<module>.md` before you return, and include that path. Use a short kebab-case module name, such as `module-vision.md`. Do not write that file for `NEED_USER` or `NEED_RESEARCH`.
+`MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return. Leave `decisions` or `assumptions` empty when there are none. Write the summary, decision rows, and assumption rows to `prdfy-spec/findings/module-<module>.md` before you return, including after a skip, and include that path. Use a short kebab-case module name, such as `module-vision.md`. Do not write that file for `NEED_USER` or `NEED_RESEARCH`.
 
 ## Modules
 
@@ -63,7 +79,7 @@ Learn who hurts, what changes if this works, who pays, and what success means.
 - Who pays, and why would they switch from the current alternative?
 - What is success in one sentence?
 
-Before the second turn, return `NEED_RESEARCH` with mode `category` if no category brief is in the prompt.
+Ask the first questions without research, because the category is not known yet. Once memory has at least one Vision row in Questions and answers, return `NEED_RESEARCH` with mode `category` if `findings/research-category.md` is not in the prompt.
 
 Exit when the actor, the pain, the outcome, the payer, and a success sentence are known.
 

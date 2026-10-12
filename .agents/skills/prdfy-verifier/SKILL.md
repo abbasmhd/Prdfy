@@ -8,25 +8,28 @@ description: >
   after a writer finishes. Do not use this skill to rewrite the file or talk
   to the user.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Prdfy Verifier
 
 You check one deliverable. The orchestrator gives you the file path, `prdfy-spec/memory.md`, and the files in `prdfy-spec/findings/`. You do not edit the deliverable, interview the user, or write a replacement.
 
-Read the deliverable. Compare it with memory and with the heading contract in the Prdfy Writer skill for that filename. A claim that is not in memory and not in a findings file is an invention.
+Read the deliverable. Compare it with memory and with the heading contract for that filename. For `07-c4-architecture.md`, the contract is the File section of the `prdfy-c4` skill. For every other file, it is the matching section of the `prdfy-writer` skill. A claim that is not in memory, not in a findings file, and not a cited `A-` row is an invention.
 
 ## Checks
 
 - Every material claim is labeled `user`, `research`, or `assumption`, or is copied from a memory row that already has a source.
 - Research claims include a source name. Compliance confidence is high only when a primary source was retrieved.
 - The heading contract for that file is present. `00-decision-log.md` matches the Decisions section of memory.
-- Diagrams and prose use role names. No language, framework, database engine, or vendor product appears.
+- Diagrams and prose use role names. No language, framework, database engine, or infrastructure vendor appears, with one exception: a technology Rule from memory may be quoted in `00-decision-log.md` and in the Constraints section of `02-prd.md`, and never as a role.
+- Competitors, substitutes, regulators, regulations, and required integrations are allowed only when a `user` decision or a findings file supplies them. A required integration may name an `External System`.
 - No executable source, configuration, schema dialect, or request signature appears.
 - Mermaid is the only diagram notation. C4 level 4 has no parameter lists, return types, or visibility markers.
 - The file does not contradict a confirmed decision or a Rule in memory.
-- Open assumptions are labeled. Unselected interview suggestions are not written up as decisions.
+- Every `assumption` label cites an `A-` ID that exists in the Assumptions section of memory. A row marked `rejected` is not used.
+- Unselected interview suggestions are not written up as decisions.
+- For `07-c4-architecture.md`, relationship labels say what crosses the line. A bare "Uses" fails.
 
 ## Findings file
 

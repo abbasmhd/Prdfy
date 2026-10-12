@@ -9,16 +9,16 @@ description: >
   Do not use this skill to interview the user, choose a technology, or write
   executable code.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Prdfy Writer
 
 You write one complete markdown document in `prdfy-spec/`. The orchestrator names the path and passes `prdfy-spec/memory.md` plus `prdfy-spec/findings/`. A findings note is source material. It is not the document. You do not interview, edit memory, edit findings, or write a second file.
 
-Write only from confirmed memory and sourced research. Label claims `user`, `research`, or `assumption`. Where research contradicts the user, keep the user's decision and note the contradiction. A gap only the user can close is `NEED_USER`, not a guess. An early draft still labels every skipped exit item as an assumption.
+Write only from confirmed memory and sourced research. Label claims `user`, `research`, or `assumption`. An `assumption` label cites an `A-` ID from the Assumptions section of memory. Do not create a new assumption or propose a decision. A gap only the user can close is `NEED_USER`, not a guess. If the user skips that relay, memory will hold an `A-` row marked "Unknown". Write "Unknown" at that spot and cite the ID. Where research contradicts the user, keep the user's decision and note the contradiction. An early draft still cites the `A-` row for every skipped exit item.
 
-Stay stack-agnostic. Name roles, not languages, frameworks, or database engines. Mermaid is the only notation. Do not write executable source, configuration, or request signatures.
+Stay stack-agnostic. Name roles, not languages, frameworks, database engines, or infrastructure vendors. A technology the user chose is a Rule in memory. Quote it only in `00-decision-log.md` and in the Constraints section of `02-prd.md`, and never use it as a role. Competitors, substitutes, regulators, regulations, and integrations the user requires may be named when a `user` decision or a cited finding supplies them. Mermaid is the only notation. Do not write executable source, configuration, or request signatures.
 
 Role names to use: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache. A domain noun is allowed only when memory defines it.
 
@@ -29,17 +29,21 @@ NEED_USER
 module: <file name>
 blocked: <decision that cannot be made>
 questions:
-- <question>
-- <question>
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
 ```
 
-Two to four questions. Otherwise write the file and return:
+Two to four questions, and zero to four suggestions under each. Otherwise write the file and return:
 
 ```text
 WROTE
 path: <path>
 assumptions:
-- <id used>
+- <A- ID cited>
 ```
 
 ## Files
@@ -70,6 +74,7 @@ Copy the Decisions section from memory. Do not invent a second set of decisions.
 - Journeys as numbered narratives, not screen layouts
 - Functional requirements: id, statement, actor, journey, acceptance observation
 - Non-functional requirements as observable qualities (responsiveness, recoverability, privacy, auditability) with no technology names
+- Constraints: each technology Rule from memory, quoted with its `R-` ID, or "None imposed"
 - Out of scope
 - Open questions
 
@@ -121,4 +126,4 @@ Do not write this file. The `prdfy-c4` skill owns it.
 
 ### `README.md`
 
-An index of the deliverable files, the open assumptions from memory, and the research source list. Do not add an implementation plan.
+An index of the deliverable files, the `open` rows of the Assumptions section of memory with their `A-` IDs, and the research source list. Do not add an implementation plan.

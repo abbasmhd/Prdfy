@@ -14,7 +14,7 @@ description: >
   domain model, C4, roadmap, compliance matrix, or any request to think a
   product through before building.
 metadata:
-  version: "1.7.0"
+  version: "1.8.0"
   alias: Predify
 compatibility: >
   Needs a host that can launch sub-agents, search the public web, and emit
@@ -34,17 +34,20 @@ Activate at the start of product thinking, before implementation planning.
 - The user says prdfy, predify, "I have an idea", "before we code", or "help me think this through".
 - The user describes users, workflows, or business rules and has not asked for an implementation.
 
-If they ask only for code, decline the implementation and offer to capture the idea through this skill first. If they already chose a technology, record it as a user-imposed constraint. Do not let that constraint rename architectural parts.
+If they ask only for code, decline the implementation and offer to capture the idea through this skill first. If they already chose a technology, record it as a Rule in memory. Do not let that constraint rename architectural parts.
 
 ## Core Rules
 
-**Stay stack-agnostic.** Describe software with roles, not products. Never write executable source, configuration, schemas in a vendor dialect, or package manifests. Never name a programming language, UI framework, application framework, or database engine in the interview or the deliverables. Mermaid diagrams are the only notation this skill emits.
+**Stay stack-agnostic.** Describe software with roles, not products. Never write executable source, configuration, schemas in a vendor dialect, or package manifests. Mermaid diagrams are the only notation this skill emits. Names fall into two groups:
+
+- *Technology names* are a programming language, UI framework, application framework, database engine, or infrastructure vendor. Never propose one in the interview or name one in a deliverable. A technology the user already chose is a Rule. It may be quoted in `00-decision-log.md` and in the Constraints section of `02-prd.md`. It never names a role, container, or component.
+- *Market and integration names* are competitors, substitutes, regulators, regulations, and third-party systems the user requires the product to integrate with. Use them when they come from a `user` decision or a cited research finding. A required integration may label an `External System`.
 
 **Interview one module at a time.** The six modules are ordered because later answers depend on earlier ones: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries. Do not open a later module in the same turn as an earlier one.
 
-**The orchestrator never does the work.** It does not search, draft questions, draw diagrams, write deliverables, or review them. If a step feels small, it still goes to a sub-agent. The one file it writes is `prdfy-spec/memory.md`.
+**The orchestrator never does the work.** It does not search, draft questions or suggested answers, propose assumptions, draw diagrams, write deliverables, or review them. If a step feels small, it still goes to a sub-agent. The one file it writes is `prdfy-spec/memory.md`.
 
-**Ask two to four questions per turn.** A Module sub-agent proposes them. The orchestrator asks them unchanged, then suggests up to four answers for each question. A long questionnaire produces shallow answers. The questions must close the largest gap still open in the current module. One sentence of context may precede them. If the user already answered something, the sub-agent must not ask it again.
+**Ask two to four questions per turn.** A Module sub-agent proposes them, each with up to four suggested answers. The orchestrator asks them and shows those suggestions unchanged. It does not write suggestions of its own. A long questionnaire produces shallow answers. The questions must close the largest gap still open in the current module. One sentence of context may precede them. If the user already answered something, the sub-agent must not ask it again.
 
 **Search, then ask.** A Research sub-agent searches during the interview and again before drafting. Search to learn the category, then ask what those findings mean for this product. Do not ask the user for facts a search should supply. If search is unavailable, the Research sub-agent says so, and every market or compliance claim is marked unverified.
 
@@ -54,7 +57,7 @@ If they ask only for code, decline the implementation and offer to capture the i
 
 ## Orchestrator and sub-agents
 
-The user has one counterpart: the orchestrator. Sub-agents do not speak to the user. The orchestrator may suggest answers. It does not choose one.
+The user has one counterpart: the orchestrator. Sub-agents do not speak to the user. The orchestrator shows the suggested answers a sub-agent supplied. It does not write its own, and it does not choose one.
 
 ### Memory
 
@@ -80,15 +83,19 @@ Rules the user imposed on this run. Later questions and deliverables obey them.
 | --- | --- | --- | --- |
 | QA-001 | Vision | <question asked> | <answer the user gave> |
 
-## Open gaps
-- <exit item still unknown, with the assumption if the user skipped it>
+## Assumptions
+| ID | Module | Exit item | Assumption | Status |
+| --- | --- | --- | --- | --- |
+| A-001 | Scope | <exit item still unknown> | <assumption, or "Unknown"> | open |
 ```
 
-`Source` is `user`, `research`, or `assumption`. `Status` is `open` or `confirmed`.
+In Decisions, `Source` is `user`, `research`, or `assumption`, and `Status` is `open` or `confirmed`. In Assumptions, `Status` is `open`, `confirmed`, or `rejected`. A deliverable that relies on an assumption cites its `A-` ID.
+
+Only the orchestrator allocates IDs. Pass the next free `D-` and `A-` IDs in every Module brief. Modules run one at a time, so their IDs cannot collide. Never reuse an ID. A gap left by a rejected row is fine. The orchestrator numbers `R-` and `QA-` rows itself.
 
 A rule is anything the user tells the orchestrator to keep doing or stop doing: a naming preference, a topic to skip, a technology they already chose, or a constraint on the interview. Write it under Rules even when it is not a product decision. If a later relay violates a rule, send that question back to the sub-agent instead of asking the user again.
 
-When the host cannot write files, keep the same four sections in the conversation and say so once. Pass that text to sub-agents in place of the file.
+When the host cannot write files, keep the same four sections (Rules, Decisions, Questions and answers, Assumptions) in the conversation and say so once. Pass that text to sub-agents in place of the file.
 
 ### Relay
 
@@ -99,21 +106,25 @@ NEED_USER
 module: <current module or deliverable>
 blocked: <decision that cannot be made>
 questions:
-- <question>
-- <question>
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
+- q: <question>
+  suggestions:
+  - <one-sentence answer> (source: user|research|assumption)
 ```
 
-Two to four questions. No other request mixed in.
+Two to four questions. Zero to four suggestions per question, drawn from memory and findings. Each suggestion that states a product fact carries its source. A procedural choice such as "Proceed" needs no label. No other request mixed in. Every sub-agent that relays (Module, Research, Writer, C4) uses this format.
 
 The orchestrator then:
 
 1. Ask the user those questions, unchanged, in its own voice. Do not add questions.
-2. Under each question, suggest up to four answers. Base them on what the user already said and on research already in the brief. Keep each suggestion to one sentence. Number them. Mark them as suggestions, not decisions.
+2. Under each question, show the suggestions the sub-agent supplied, unchanged and numbered, and mark them as suggestions, not decisions. Do not add, drop, or reword a suggestion. If a question has none, show none.
 3. Invite the user to pick a number, edit a suggestion, or write a different answer.
 4. Wait for the answer. Append the question and the user's answer to memory. Send that answer back to the same sub-agent, verbatim, and tell it to continue. Do not send an unselected suggestion.
 5. Leave every other sub-agent paused until that answer is in memory and in the brief they would need.
 
-If the sub-agent returns fewer than two or more than four questions, send the relay back and tell it to correct the count. Do not rewrite the questions yourself.
+If the sub-agent returns fewer than two or more than four questions, or more than four suggestions under a question, send the relay back and tell it to correct the count. Do not rewrite the questions or suggestions yourself.
 
 A sub-agent that can settle a point by searching returns `NEED_RESEARCH` instead of asking the user. The orchestrator launches a Research sub-agent and passes the findings file it wrote. Only a remaining gap becomes `NEED_USER`.
 
@@ -132,15 +143,15 @@ Each role is its own skill. Launch a sub-agent and tell it to read and follow th
 | Verifier | `prdfy-verifier` | Writes `findings/verify-<deliverable>.md` and does not edit the deliverable |
 | Review | `prdfy-review` | Writes `findings/review.md` and returns the two closing questions |
 
-Pass the memory file, the latest user words, and the skill path. Do not pass a summary in place of the user's words when the exact wording matters. A Module or Writer sub-agent that proposes a decision row returns it. The orchestrator writes the row into memory when the user confirms it.
+Pass the memory file, the latest user words, and the skill path. Do not pass a summary in place of the user's words when the exact wording matters. Only a Module sub-agent proposes decision and assumption rows, and it returns them. The orchestrator writes those rows into memory. Writer and C4 sub-agents never propose rows. They cite memory IDs, and they relay a gap as `NEED_USER`.
 
 Do not substitute a general research, brainstorming, PRD, or C4 skill. Those skills talk to the user, name technologies, or continue into implementation. `prdfy-c4` is the C4 skill for this contract.
 
-Module work stays in order. Research for the active module finishes before the Module sub-agent proposes questions. Writers start only after Architectural Boundaries is confirmed, and each writer may run at the same time as the others. A Verifier starts only after its Writer finishes. On a failed check, send that Writer back once with the findings. If it fails again, stop that file and tell the user. Do not fix the file yourself.
+Module work stays in order. Once Research for the active module has been launched, it finishes before the Module sub-agent proposes more questions. The Vision brief asks its first questions before any research, because the category is not known yet. Writers start only after Architectural Boundaries is confirmed, and each writer may run at the same time as the others. A Verifier starts only after its Writer finishes. On a failed check, send that Writer back once with the findings. If it fails again, stop that file and tell the user. Do not fix the file yourself.
 
 ### What the orchestrator may say
 
-Status, the questions from a relay, up to four suggested answers under each of those questions, a module summary the Module sub-agent already wrote, and the final review note. A suggestion becomes a product decision only after the user accepts it.
+Status, the questions from a relay or a closing step, the suggestions the sub-agent supplied under each of those questions, a module summary the Module sub-agent already wrote, and the final review note. A suggestion becomes a product decision only after the user accepts it.
 
 ## Terminology
 
@@ -183,18 +194,18 @@ Create `prdfy-spec/memory.md` when it does not exist, then launch the Vision Mod
 For the active module:
 
 1. Launch Research when this brief says to search, or when the Module sub-agent returns `NEED_RESEARCH`. Pass the markdown file it wrote.
-2. Launch the Module sub-agent with the brief, the memory file, the research, and the user's latest words.
+2. Launch the Module sub-agent with the brief, the memory file, the research, the user's latest words, and the next free `D-` and `A-` IDs.
 3. On `NEED_USER`, run the relay. Then launch that same module again with the answer.
 4. Repeat until it returns `MODULE_READY`, or the user says to skip.
-5. On a skip, write an assumption for every missing exit item into Open gaps and mark the decision `open`.
-6. Write the confirmed rows into memory. Show the summary and those new rows, plus the two closing questions the sub-agent supplied: what to correct, and whether to proceed. Suggest up to four answers under each of those questions too. Do not attach the next module.
+5. On a skip, launch the same module again with the instruction `skip`. It proposes an assumption for every missing exit item and returns `MODULE_READY`. Do not write the assumptions yourself.
+6. Write the returned decision rows into Decisions and the assumption rows into Assumptions, using the IDs the module returned. Show the summary and those new rows, plus the two closing questions and their suggestions, exactly as the sub-agent supplied them: what to correct, and whether to proceed. Do not attach the next module.
 7. Relay the reply. Start the next module only after the user proceeds.
 
-`MODULE_READY` contains the summary, the new log rows, and those two closing questions. It is not permission to draft. The Module sub-agent follows `prdfy-module`, which holds the six briefs: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries.
+`MODULE_READY` contains the summary, the new decision and assumption rows, and those two closing questions with their suggestions. It is not permission to draft. The Module sub-agent follows `prdfy-module`, which holds the six briefs: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries.
 
 ### 3. Research before drafting
 
-After the user confirms Architectural Boundaries, launch one Research sub-agent to pressure-test the draft:
+After the user confirms Architectural Boundaries, launch one Research sub-agent in mode `pressure-test`. It writes `findings/research-pressure-test.md` and checks:
 
 - Competitors and substitutes: promise, audience, and the gap this product claims.
 - Market dynamics: buyer, switching cost, and the words the category already uses.
@@ -206,7 +217,7 @@ Pass that findings folder to every Writer. Where research contradicts the user, 
 
 Findings files are notes. They do not replace the specification. After module six is confirmed, or earlier if the user explicitly demands a draft, create every document below. An early draft still labels every skipped exit item as an assumption.
 
-Launch one Writer per file, following `prdfy-writer`. Give it the memory file, `prdfy-spec/findings/`, and the path to write. On `NEED_USER`, relay, write the answer into memory, then resume that Writer. Also pass the answer to any Writer whose document depends on the same fact. Writers do not edit `memory.md` or the findings files. The decision log is a copy of the Decisions section.
+Launch one Writer per file, following `prdfy-writer`. Give it the memory file, `prdfy-spec/findings/`, and the path to write. On `NEED_USER`, relay, write the answer into memory as a `user` decision, then resume that Writer. If the user skips, add an `A-` row whose assumption is "Unknown" for that blocked decision. Do not pick a suggestion for them. Then resume the Writer. Also pass the answer to any Writer whose document depends on the same fact. Writers do not edit `memory.md` or the findings files. The decision log is a copy of the Decisions section.
 
 | File | Document |
 | --- | --- |
@@ -219,7 +230,7 @@ Launch one Writer per file, following `prdfy-writer`. Give it the memory file, `
 | `06-domain-architecture.md` | Domain architecture |
 | `README.md` | Index of the documents, open assumptions, and sources |
 
-Launch `prdfy-c4` for `07-c4-architecture.md` after `06-domain-architecture.md` exists, so the C4 diagrams use the same aggregates. On `NEED_USER` from the C4 skill, relay, write the answer into memory, and resume `prdfy-c4`.
+Launch `prdfy-c4` for `07-c4-architecture.md` after `06-domain-architecture.md` exists, so the C4 diagrams use the same aggregates. On `NEED_USER` from the C4 skill, handle it the same way as a Writer relay, then resume `prdfy-c4`.
 
 Do not finish while any of these files is missing. When the host cannot write files, each sub-agent returns its full document and the orchestrator presents them in the order above, with the C4 document last.
 
@@ -227,7 +238,7 @@ Do not finish while any of these files is missing. When the host cannot write fi
 
 Launch a Verifier, following `prdfy-verifier`, for each deliverable after its writer finishes. On a failure, resume the same skill once with those findings, then verify again. A second failure stops that file. Report it. Do not repair it in the orchestrator. A failed C4 file goes back to `prdfy-c4`, not to `prdfy-writer`.
 
-Then launch one Review sub-agent following `prdfy-review`. Ask the user the two questions it returns. Relay the answer to the Writer for that deliverable, then verify that file again.
+Then launch one Review sub-agent following `prdfy-review`. Ask the user the two questions it returns, with the suggestions it supplied. Relay the answer to the Writer for that deliverable, then verify that file again.
 
 Do not begin implementation planning on the next turn unless the user leaves this skill by asking for something else.
 
