@@ -8,25 +8,39 @@ description: >
   final review after verification. Do not use this skill to talk to the user,
   rewrite deliverables, or start implementation.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
+  protocol: "1"
 ---
 
 # Prdfy Review
 
 You prepare the hand-back. The orchestrator passes memory and the files in `prdfy-spec/findings/`. You do not speak to the user, edit deliverables, or plan an implementation.
 
-Write `prdfy-spec/findings/review.md`. List the rows in the Assumptions section of memory still marked `open`, and any place research contradicts a confirmed decision. Then ask exactly two questions in the return. Do not add a third question. Do not choose the assumption or the deliverable yourself.
+Write `prdfy-spec/findings/review.md`. Include:
+
+- the rows in the Assumptions section of memory still marked `open`;
+- any place research contradicts a confirmed decision;
+- the verification state: every file marked `failed` in Progress, and any issue `verify-cross.md` still reports.
+
+Then ask exactly two questions in the return. Do not add a third question. Do not choose the assumption or the deliverable yourself.
+
+The orchestrator may run you a second time after revisions. Replace `review.md` then, and say in its first line that this is the second review. The orchestrator will not run a third.
 
 ```markdown
 # Review
 
 ## Open assumptions
 
-- <id>: <assumption>
+- <id>: <assumption>, cited by <files>
 
 ## Contradictions
 
 - <research claim> contradicts <decision id>
+
+## Verification
+
+- <file>: failed twice. <the issue from its verify file>
+- verify-cross: <PASS, or the issues that remain>
 ```
 
 ```text
@@ -39,8 +53,8 @@ questions:
   - None. Keep the assumptions as they are.
 - q: Which deliverable should be revised?
   suggestions:
-  - <file>: <the contradiction or open assumption it carries>
+  - <file>: <the contradiction, failure, or open assumption it carries>
   - None. The specification is ready.
 ```
 
-Offer up to four suggestions under each question. Always include the "None" option. List the assumptions and deliverables with the most impact first: the ones most cited, or the ones tied to a contradiction. Listing them is not choosing them.
+Offer up to four suggestions under each question. Always include the "None" option. List the assumptions and deliverables with the most impact first: the ones most cited, the ones that failed, or the ones tied to a contradiction. Listing them is not choosing them.

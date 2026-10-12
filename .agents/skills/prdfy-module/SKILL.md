@@ -8,7 +8,8 @@ description: >
   delegates the active module. Do not use this skill to talk to the user,
   search the web, or write deliverables.
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
+  protocol: "1"
 ---
 
 # Prdfy Module
@@ -22,6 +23,10 @@ Ask two to four questions. Pick the ones that close the largest open gap. Under 
 Number new rows from the IDs the orchestrator passed, in order. Do not reuse an ID already in memory.
 
 When the orchestrator relaunches you with `skip`, ask nothing. Propose one assumption for every exit item that is still unknown, with status `open`, and return `MODULE_READY`.
+
+When the orchestrator relaunches you with `revise D-<n>` and the user's words, restate only the exit items that decision touches. Ask with `NEED_USER` if the change leaves something unclear. Then return `MODULE_READY` with the replacement rows, each marked `supersedes D-<n>`. Do not repeat the rest of the module.
+
+Role names: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache.
 
 ## Return one of these
 
@@ -52,7 +57,7 @@ path: prdfy-spec/findings/module-<module>.md
 module: <module name>
 summary: <five to eight lines>
 decisions:
-- D-<n> | <decision> | <user|research|assumption> | <open|confirmed>
+- D-<n> | <decision> | <user|research|assumption> | <open|confirmed> | <supersedes D-<m>, only on revise>
 assumptions:
 - A-<n> | <exit item> | <assumption> | open
 questions:
@@ -79,7 +84,7 @@ Learn who hurts, what changes if this works, who pays, and what success means.
 - Who pays, and why would they switch from the current alternative?
 - What is success in one sentence?
 
-Ask the first questions without research, because the category is not known yet. Once memory has at least one Vision row in Questions and answers, return `NEED_RESEARCH` with mode `category` if `findings/research-category.md` is not in the prompt.
+Ask the first questions without research, because the category is not known yet. Once memory has at least one Vision row in Questions and answers, return `NEED_RESEARCH` with mode `category` if no `research-category` findings file is in the prompt.
 
 Exit when the actor, the pain, the outcome, the payer, and a success sentence are known.
 
@@ -136,4 +141,4 @@ Learn what sits inside the product, what is delegated, and where trust changes. 
 - What are the trust boundaries among the public actor, the operator, partners, and external systems?
 - What qualitative expectations for volume, responsiveness, or availability should change a boundary?
 
-Exit with an inside/outside list, consistency expectations, and trust boundaries. Use role names, not products: Interactive User Client, Application Service, Relational State Store, Message Broker, External System.
+Exit with an inside/outside list, consistency expectations, and trust boundaries. Use the role names above, not products.
