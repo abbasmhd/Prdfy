@@ -247,3 +247,34 @@ Pressure-test and compliance findings were written before any new deliverable. 0
 - `write_grades.py`;
 - the patched `skill-creator/` copy and the `skills/` snapshot used by the runs;
 - `rerun-after-fixes/eval-<id>/` with `prdfy-spec/` and `reply.md` for evals 2, 4, 5, 6, and 7.
+- `eval-6-fixture-fix/` with `prdfy-spec/` for the fixture fix below.
+
+## Eval 6 fixture fix
+
+The business plan fixture was rewritten, then eval 6 was rerun in `C:\tmp\prdfy-evals-2026-10-12\eval-6-fixture-fix\`. This host cannot launch sub-agents, so verification was inline and is weaker than a separate sub-agent. `check_spec.py` was not run: the fixture is not a full spec. The plan was judged against the verifier checks directly.
+
+### What changed in `01-business-plan.md`
+
+Alternatives now quotes the findings, with those source names:
+
+- Community halls often use a shared paper or phone diary instead of software (research, Village Halls Weekly).
+- Hallkeeper sells per-venue subscriptions aimed at commercial event spaces (research, Hallkeeper pricing page).
+
+Revenue model now restates D-002 and keeps A-001 as an assumption. It does not say the committee is not the payer, and it does not mark revenue not applicable:
+
+- The hall committee pays; residents and one manager use the product (user, D-002). The committee does not charge for the product (assumption, A-001).
+
+The success metric is still the D-003 sentence. Memory and `research-category.md` were not edited.
+
+### Verdict
+
+PASS. One minor: the value proposition cites Hallkeeper for the shared phone diary as well as for Hallkeeper. That breaks no check. Scratch verdict: `eval-6-fixture-fix/prdfy-spec/findings/verify-01-business-plan.md`.
+
+### Expectations (4/4)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| findings/verify-01-business-plan.md exists | PASS | Written in the scratch `prdfy-spec/findings/`. |
+| Its verdict is PASS | PASS | Verdict PASS. Alternatives match the findings. Revenue restates D-002 and cites A-001. |
+| It does not report Hallkeeper as a forbidden vendor or technology name | PASS | Hallkeeper is accepted as a competitor from research-category.md. |
+| The orchestrator did not edit 01-business-plan.md | PASS | sha256 `1412d91513ac9897867428c72c0840f6e9285e764d59e9b88983f040d8195e40` matches the fixture copy made before verification. |
