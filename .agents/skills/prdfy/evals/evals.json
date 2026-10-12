@@ -1,0 +1,99 @@
+{
+  "skill_name": "prdfy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "prdfy: I want to build a booking app for our community hall so volunteers stop double booking the main room. We've already decided on PostgreSQL and React.",
+      "expected_output": "The orchestrator opens the interview, records the technology choice as a Rule, and asks two to four Vision questions with suggestions. No technology is proposed or used as a role.",
+      "files": [],
+      "expectations": [
+        "prdfy-spec/memory.md exists and has a Rules row with an R- ID that quotes the PostgreSQL and React choice",
+        "The reply to the user asks between two and four questions, all about Vision (who feels the problem, the outcome, who pays, or success)",
+        "Each question shown to the user has at most four suggestions, and the orchestrator presents them as suggestions, not decisions",
+        "The reply does not open the Scope module or any later module",
+        "No file under prdfy-spec/ uses PostgreSQL or React as the name of a role, container, or component",
+        "The orchestrator did not search the web or write a findings file itself; any research ran in a sub-agent"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Continue my prdfy run. prdfy-spec/memory.md is already there. Skip domain rules, I don't know them yet.",
+      "expected_output": "The Domain Rules module is relaunched with skip, proposes open assumptions for its exit items, writes its module file, and the orchestrator asks the two closing questions without opening Strategy and MVP.",
+      "files": ["evals/files/memory-after-scope.md"],
+      "expectations": [
+        "prdfy-spec/findings/module-domain-rules.md exists",
+        "The Assumptions section of prdfy-spec/memory.md has at least one new A- row for Domain Rules with status open",
+        "The new A- rows were proposed by the Module sub-agent, not written from scratch by the orchestrator",
+        "The reply shows the two closing questions (what to correct, whether to proceed), each with suggestions",
+        "The reply does not ask Strategy and MVP questions",
+        "The Progress section still names Domain Rules as the active module, or names Strategy and MVP only after the user agrees to proceed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "prdfy: scope a tool that helps small bakeries take pre-orders. Note: web search is not available in this environment, do not try to use it.",
+      "expected_output": "Research reports that search is unavailable and marks its claims unverified; no market statistic, competitor, or price is invented.",
+      "files": [],
+      "expectations": [
+        "Any prdfy-spec/findings/research-*.md file has 'yes' under Unverified and says search was unavailable",
+        "No file states a market size, statistic, price, or named competitor without a source",
+        "The reply to the user asks between two and four Vision questions"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Continue my prdfy run. prdfy-spec/memory.md is already there. We're on risk and compliance now.",
+      "expected_output": "Because no jurisdiction is in memory, the Research or Module sub-agent relays a question about jurisdiction and regulated activities instead of naming a statute.",
+      "files": ["evals/files/memory-at-risk.md"],
+      "expectations": [
+        "The reply asks which jurisdictions the product serves",
+        "The reply asks two to four questions in total",
+        "No file under prdfy-spec/ names a specific statute or regulation",
+        "Any research-compliance findings file was written, even if it has no findings"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Continue my prdfy run. prdfy-spec/memory.md is already there. Actually, operators are out of scope for v1 — only residents and a single manager.",
+      "expected_output": "The orchestrator does not edit D-003 in place. It relaunches the Scope module with revise D-003, writes the replacement row, marks D-003 superseded, and returns to Risk and Compliance.",
+      "files": ["evals/files/memory-at-risk.md"],
+      "expectations": [
+        "In prdfy-spec/memory.md, D-003 still exists with status superseded",
+        "D-003's Superseded by cell names a new D- ID",
+        "The new D- row is in the Scope module, has source user, and says operators are out of scope for the first release",
+        "The original wording of D-003 is unchanged",
+        "The Progress section still names Risk and Compliance as the active module"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Act as the Prdfy orchestrator in the verify phase. prdfy-spec/ already holds memory.md, findings/research-category.md, and 01-business-plan.md. Verify 01-business-plan.md using the prdfy-verifier skill.",
+      "expected_output": "The verifier passes the business plan. Hallkeeper is a competitor supplied by a findings file, so naming it is allowed.",
+      "files": [
+        "evals/files/spec-with-competitors/memory.md",
+        "evals/files/spec-with-competitors/findings/research-category.md",
+        "evals/files/spec-with-competitors/01-business-plan.md"
+      ],
+      "expectations": [
+        "prdfy-spec/findings/verify-01-business-plan.md exists",
+        "Its verdict is PASS",
+        "It does not report Hallkeeper as a forbidden vendor or technology name",
+        "The orchestrator did not edit 01-business-plan.md"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "let's continue prdfy",
+      "expected_output": "The orchestrator reads Progress, says in one sentence that the run is in the writing phase, and launches writers only for the pending files 03 to 06, then C4, then the decision log and README pair.",
+      "files": ["evals/files/memory-writing.md"],
+      "expectations": [
+        "The reply says in one sentence that the run is in the writing phase",
+        "The orchestrator does not restart the interview or ask Vision questions",
+        "01-business-plan.md and 02-prd.md are not rewritten",
+        "07-c4-architecture.md is written only after 06-domain-architecture.md",
+        "00-decision-log.md and README.md are written last, in one Writer launch",
+        "Every file written follows the H1 and H2 headings in the prdfy-writer or prdfy-c4 contract"
+      ]
+    }
+  ]
+}

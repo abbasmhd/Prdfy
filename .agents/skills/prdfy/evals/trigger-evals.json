@@ -1,0 +1,22 @@
+[
+  {"query": "I have an idea for an app that lets neighbours lend each other tools. Can you help me think it through before we build anything?", "should_trigger": true},
+  {"query": "prdfy: a marketplace for local tutors", "should_trigger": true},
+  {"query": "Before we write any code, I want a proper PRD and architecture for a clinic appointment system we're starting next month.", "should_trigger": true},
+  {"query": "help me scope an MVP for a subscription box for rare houseplants, who pays, what's in v1, what can wait", "should_trigger": true},
+  {"query": "We're thinking about building an internal tool for tracking equipment loans across our offices. What should the domain model and boundaries look like before we pick a stack?", "should_trigger": true},
+  {"query": "predify this: farmers sell surplus produce directly to restaurants", "should_trigger": true},
+  {"query": "I want a business plan, roadmap and compliance matrix for a new app that handles kids' sports club payments in the UK", "should_trigger": true},
+  {"query": "can we do a pre-coding spec for adding group bookings to our hall booking product? nothing is built for that feature yet", "should_trigger": true},
+  {"query": "My cofounder and I keep arguing about what the first release of our freelancer invoicing tool should include. Can you run us through it properly?", "should_trigger": true},
+  {"query": "Give me a C4 model for a product idea: a shared calendar for co-parents. Nothing exists yet.", "should_trigger": true},
+  {"query": "Draw a C4 container diagram of this repository's current services.", "should_trigger": false},
+  {"query": "Write a FastAPI endpoint that creates a booking and returns 409 on a double booking.", "should_trigger": false},
+  {"query": "Plan the next two sprints for our shipped mobile app based on the open Jira tickets.", "should_trigger": false},
+  {"query": "Document the domain model of the existing codebase in src/ as markdown.", "should_trigger": false},
+  {"query": "Fix the failing unit tests in the payments module.", "should_trigger": false},
+  {"query": "Review this PRD I wrote and tell me if the acceptance criteria are testable.", "should_trigger": false},
+  {"query": "What's the difference between a bounded context and an aggregate?", "should_trigger": false},
+  {"query": "Convert this PlantUML sequence diagram to Mermaid.", "should_trigger": false},
+  {"query": "Create a Next.js project with Tailwind and a login page.", "should_trigger": false},
+  {"query": "Our app is live; write release notes for version 3.2 from the git log.", "should_trigger": false}
+]
