@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Improve a skill description based on eval results.
 
-Takes eval results (from run_eval.py) and generates an improved description
-by calling `claude -p` as a subprocess (uses the session's Claude Code auth,
-no separate ANTHROPIC_API_KEY needed). Trigger checks in run_eval.py do not
-use this binary; they honor PRDFY_AGENT_CMD.
+Takes eval results (from run_eval.py) and asks the command in PRDFY_AGENT_CMD,
+or --agent-cmd, for a new description. Put {query} where the prompt should go.
+If neither is set, the script exits with an error that names PRDFY_AGENT_CMD
+and does not invent a description.
 """
 
 import argparse
@@ -15,35 +15,43 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts.run_eval import AgentCommandError, agent_command_template, build_agent_argv
 from scripts.utils import parse_skill_md
 
 
-def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
-    """Run `claude -p` with the prompt on stdin and return the text response.
+def _call_agent(
+    prompt: str,
+    model: str | None,
+    agent_cmd: str | None = None,
+    timeout: int = 300,
+) -> str:
+    """Run the configured agent command and return its text response.
 
-    Prompt goes over stdin (not argv) because it embeds the full SKILL.md
-    body and can easily exceed comfortable argv length.
+    {query} in PRDFY_AGENT_CMD or --agent-cmd is replaced with the prompt.
+    The prompt is one argument. This function does not choose an agent.
     """
-    cmd = ["claude", "-p", "--output-format", "text"]
-    if model:
-        cmd.extend(["--model", model])
-
-    # Remove CLAUDECODE env var to allow nesting claude -p inside a
-    # Claude Code session. The guard is for interactive terminal conflicts;
-    # programmatic subprocess usage is safe. Same pattern as run_eval.py.
+    template = agent_command_template(agent_cmd)
+    cmd = build_agent_argv(template, prompt, model)
+    # Drop CLAUDECODE when it is set so a nested Claude Code process is
+    # allowed to start. Other agent commands ignore the missing variable.
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
-    result = subprocess.run(
-        cmd,
-        input=prompt,
-        capture_output=True,
-        text=True,
-        env=env,
-        timeout=timeout,
-    )
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=timeout,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            f"agent command {cmd[0]!r} was not found. "
+            "PRDFY_AGENT_CMD must name an agent CLI installed on this host."
+        ) from exc
     if result.returncode != 0:
         raise RuntimeError(
-            f"claude -p exited {result.returncode}\nstderr: {result.stderr}"
+            f"agent command exited {result.returncode}\nstderr: {result.stderr}"
         )
     return result.stdout
 
@@ -58,8 +66,9 @@ def improve_description(
     test_results: dict | None = None,
     log_dir: Path | None = None,
     iteration: int | None = None,
+    agent_cmd: str | None = None,
 ) -> str:
-    """Call Claude to improve the description based on eval results."""
+    """Ask the configured agent for a new description based on eval results."""
     failed_triggers = [
         r for r in eval_results["results"]
         if r["should_trigger"] and not r["pass"]
@@ -142,7 +151,7 @@ I'd encourage you to be creative and mix up the style in different iterations si
 
 Please respond with only the new description text in <new_description> tags, nothing else."""
 
-    text = _call_claude(prompt, model)
+    text = _call_agent(prompt, model, agent_cmd)
 
     match = re.search(r"<new_description>(.*?)</new_description>", text, re.DOTALL)
     description = match.group(1).strip().strip('"') if match else text.strip().strip('"')
@@ -158,9 +167,8 @@ Please respond with only the new description text in <new_description> tags, not
 
     # Safety net: the prompt already states the 1024-char hard limit, but if
     # the model blew past it anyway, make one fresh single-turn call that
-    # quotes the too-long version and asks for a shorter rewrite. (The old
-    # SDK path did this as a true multi-turn; `claude -p` is one-shot, so we
-    # inline the prior output into the new prompt instead.)
+    # quotes the too-long version and asks for a shorter rewrite. The agent
+    # command is one-shot, so the prior output is inlined into the new prompt.
     if len(description) > 1024:
         shorten_prompt = (
             f"{prompt}\n\n"
@@ -172,7 +180,7 @@ Please respond with only the new description text in <new_description> tags, not
             f"important trigger words and intent coverage. Respond with only "
             f"the new description in <new_description> tags."
         )
-        shorten_text = _call_claude(shorten_prompt, model)
+        shorten_text = _call_agent(shorten_prompt, model, agent_cmd)
         match = re.search(r"<new_description>(.*?)</new_description>", shorten_text, re.DOTALL)
         shortened = match.group(1).strip().strip('"') if match else shorten_text.strip().strip('"')
 
@@ -197,9 +205,20 @@ def main():
     parser.add_argument("--eval-results", required=True, help="Path to eval results JSON (from run_eval.py)")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
     parser.add_argument("--history", default=None, help="Path to history JSON (previous attempts)")
-    parser.add_argument("--model", required=True, help="Model for improvement")
+    parser.add_argument("--model", required=True, help="Model for improvement. Replaces {model} in the agent command.")
+    parser.add_argument(
+        "--agent-cmd",
+        default=None,
+        help="Command that proposes a description. Defaults to PRDFY_AGENT_CMD. Include {query}.",
+    )
     parser.add_argument("--verbose", action="store_true", help="Print thinking to stderr")
     args = parser.parse_args()
+
+    try:
+        agent_command_template(args.agent_cmd)
+    except AgentCommandError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     skill_path = Path(args.skill_path)
     if not (skill_path / "SKILL.md").exists():
@@ -225,6 +244,7 @@ def main():
         eval_results=eval_results,
         history=history,
         model=args.model,
+        agent_cmd=args.agent_cmd,
     )
 
     if args.verbose:
