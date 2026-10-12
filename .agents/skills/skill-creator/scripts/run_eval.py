@@ -8,9 +8,11 @@ for a set of queries. Outputs results as JSON.
 import argparse
 import json
 import os
+import queue
 import select
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -30,6 +32,56 @@ def find_project_root() -> Path:
         if (parent / ".claude").is_dir():
             return parent
     return current
+
+
+class QueryUnobservable(Exception):
+    """Stdout could not be read, so this query has no trigger result."""
+
+
+class _PipeNotSelectable(Exception):
+    pass
+
+
+def _start_stdout_reader(stream, out: queue.Queue) -> threading.Thread:
+    def reader() -> None:
+        try:
+            while True:
+                chunk = stream.read1(8192)
+                out.put(chunk)
+                if not chunk:
+                    return
+        except Exception as exc:
+            out.put(exc)
+
+    thread = threading.Thread(target=reader, daemon=True)
+    thread.start()
+    return thread
+
+
+def _selectable_chunk(stream, wait_seconds: float):
+    try:
+        ready, _, _ = select.select([stream], [], [], wait_seconds)
+    except OSError as exc:
+        # Windows pipes are not sockets. select() raises WinError 10093 or 10038.
+        raise _PipeNotSelectable() from exc
+    if not ready:
+        return None
+    return os.read(stream.fileno(), 8192)
+
+
+def _observe(fetch):
+    """Return a trigger bool, or None when output could not be read.
+
+    None is not a negative trigger. Callers must not count it as not triggered.
+    """
+    try:
+        return fetch()
+    except (QueryUnobservable, OSError) as exc:
+        print(f"Warning: query output could not be read: {exc}", file=sys.stderr)
+        return None
+    except Exception as exc:
+        print(f"Warning: query failed: {exc}", file=sys.stderr)
+        return False
 
 
 def run_single_query(
@@ -96,23 +148,41 @@ def run_single_query(
         # Track state for stream event detection
         pending_tool_name = None
         accumulated_json = ""
+        pipe_queue = None
+        reader_thread = None
 
         try:
             while time.time() - start_time < timeout:
-                if process.poll() is not None:
+                process_done = False
+                if pipe_queue is None and process.poll() is not None:
                     remaining = process.stdout.read()
                     if remaining:
                         buffer += remaining.decode("utf-8", errors="replace")
-                    break
+                    process_done = True
+                else:
+                    if pipe_queue is None:
+                        try:
+                            chunk = _selectable_chunk(process.stdout, 1.0)
+                        except _PipeNotSelectable:
+                            pipe_queue = queue.Queue()
+                            reader_thread = _start_stdout_reader(process.stdout, pipe_queue)
+                            continue
+                    else:
+                        try:
+                            chunk = pipe_queue.get(timeout=1.0)
+                        except queue.Empty:
+                            continue
+                        if isinstance(chunk, Exception):
+                            raise QueryUnobservable(
+                                "could not read claude output after select() failed"
+                            ) from chunk
 
-                ready, _, _ = select.select([process.stdout], [], [], 1.0)
-                if not ready:
-                    continue
-
-                chunk = os.read(process.stdout.fileno(), 8192)
-                if not chunk:
-                    break
-                buffer += chunk.decode("utf-8", errors="replace")
+                    if not chunk:
+                        if chunk is None:
+                            continue
+                        process_done = True
+                    else:
+                        buffer += chunk.decode("utf-8", errors="replace")
 
                 while "\n" in buffer:
                     line, buffer = buffer.split("\n", 1)
@@ -169,11 +239,16 @@ def run_single_query(
 
                     elif event.get("type") == "result":
                         return triggered
+
+                if process_done:
+                    break
         finally:
             # Clean up process on any exit path (return, exception, timeout)
             if process.poll() is None:
                 process.kill()
                 process.wait()
+            if reader_thread is not None:
+                reader_thread.join(timeout=1)
 
         return triggered
     finally:
@@ -181,50 +256,17 @@ def run_single_query(
             command_file.unlink()
 
 
-def run_eval(
-    eval_set: list[dict],
-    skill_name: str,
-    description: str,
-    num_workers: int,
-    timeout: int,
-    project_root: Path,
-    runs_per_query: int = 1,
-    trigger_threshold: float = 0.5,
-    model: str | None = None,
-) -> dict:
-    """Run the full eval set and return results."""
+def _rows_from_observations(
+    query_items: dict[str, dict],
+    query_triggers: dict[str, list],
+    trigger_threshold: float,
+) -> list[dict]:
     results = []
-
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        future_to_info = {}
-        for item in eval_set:
-            for run_idx in range(runs_per_query):
-                future = executor.submit(
-                    run_single_query,
-                    item["query"],
-                    skill_name,
-                    description,
-                    timeout,
-                    str(project_root),
-                    model,
-                )
-                future_to_info[future] = (item, run_idx)
-
-        query_triggers: dict[str, list[bool]] = {}
-        query_items: dict[str, dict] = {}
-        for future in as_completed(future_to_info):
-            item, _ = future_to_info[future]
-            query = item["query"]
-            query_items[query] = item
-            if query not in query_triggers:
-                query_triggers[query] = []
-            try:
-                query_triggers[query].append(future.result())
-            except Exception as e:
-                print(f"Warning: query failed: {e}", file=sys.stderr)
-                query_triggers[query].append(False)
-
     for query, triggers in query_triggers.items():
+        if any(trigger is None for trigger in triggers):
+            raise QueryUnobservable(
+                "query output could not be read, so it was not scored as not triggered"
+            )
         item = query_items[query]
         trigger_rate = sum(triggers) / len(triggers)
         should_trigger = item["should_trigger"]
@@ -240,6 +282,47 @@ def run_eval(
             "runs": len(triggers),
             "pass": did_pass,
         })
+    return results
+
+
+def run_eval(
+    eval_set: list[dict],
+    skill_name: str,
+    description: str,
+    num_workers: int,
+    timeout: int,
+    project_root: Path,
+    runs_per_query: int = 1,
+    trigger_threshold: float = 0.5,
+    model: str | None = None,
+) -> dict:
+    """Run the full eval set and return results."""
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        future_to_info = {}
+        for item in eval_set:
+            for run_idx in range(runs_per_query):
+                future = executor.submit(
+                    run_single_query,
+                    item["query"],
+                    skill_name,
+                    description,
+                    timeout,
+                    str(project_root),
+                    model,
+                )
+                future_to_info[future] = (item, run_idx)
+
+        query_triggers: dict[str, list] = {}
+        query_items: dict[str, dict] = {}
+        for future in as_completed(future_to_info):
+            item, _ = future_to_info[future]
+            query = item["query"]
+            query_items[query] = item
+            if query not in query_triggers:
+                query_triggers[query] = []
+            query_triggers[query].append(_observe(future.result))
+
+    results = _rows_from_observations(query_items, query_triggers, trigger_threshold)
 
     passed = sum(1 for r in results if r["pass"])
     total = len(results)
