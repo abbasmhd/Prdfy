@@ -5,7 +5,12 @@ Date: 2026-10-12.
 
 ## Status
 
-Fixed on 2026-10-12, following `reviews/prdfy-fix-plan.md`: section 1 (1.1 to 1.8) and items 2.1, 2.2, and 2.10. Everything else is still open.
+Every item is fixed (2026-10-12):
+
+- `reviews/prdfy-fix-plan.md` covered section 1 and items 2.1, 2.2, and 2.10.
+- `reviews/prdfy-fix-plan-2.md` covered the rest of section 2 and sections 3 and 4.
+
+The scenario and trigger evals from 4.4 are written but have not been run yet.
 
 ## Summary
 

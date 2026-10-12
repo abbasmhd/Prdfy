@@ -23,10 +23,11 @@ During the interview, a research sub-agent looks up competitors, market dynamics
 
 ## Deliverables
 
-After the architectural boundaries are confirmed, writers produce `prdfy-spec/`:
+After the architectural boundaries are confirmed, writers produce eight documents and an index in `prdfy-spec/`:
 
 | File | Deliverable |
 | --- | --- |
+| `00-decision-log.md` | Decisions and rules captured during the interview |
 | `01-business-plan.md` | Business plan and value proposition |
 | `02-prd.md` | Product requirements document |
 | `03-specifications.md` | Specifications and domain contracts |
@@ -34,12 +35,15 @@ After the architectural boundaries are confirmed, writers produce `prdfy-spec/`:
 | `05-risk-compliance.md` | Risk management and compliance matrix |
 | `06-domain-architecture.md` | Domain architecture |
 | `07-c4-architecture.md` | C4 model, levels 1–4, in Mermaid |
+| `README.md` | Index of the documents, open assumptions, and sources |
 
-A verifier checks each file. The skill stops at the specification.
+A verifier checks each file, then checks that the documents agree with each other. The skill stops at the specification.
+
+The run state lives in `prdfy-spec/memory.md`. That file records your rules, decisions, answers, assumptions, and progress, so you can stop and pick up the run in a later session. Research, module, and verification notes go to `prdfy-spec/findings/`.
 
 ## Install
 
-The skill is the [`.agents/skills/prdfy/`](.agents/skills/prdfy/) folder. The host needs sub-agents, web search, and Mermaid. After installing, start a new Agent chat and invoke `/prdfy`, or ask the agent to scope a product idea.
+The skill is seven folders under [`.agents/skills/`](.agents/skills/): the `prdfy` orchestrator and its six sub-agent skills (`prdfy-research`, `prdfy-module`, `prdfy-writer`, `prdfy-c4`, `prdfy-verifier`, `prdfy-review`). Install all seven, from the same version. The orchestrator checks that every skill declares the same `metadata.protocol`, and it stops if one differs. The host needs sub-agents, web search, and Mermaid. After installing, start a new Agent chat and invoke `/prdfy`, or ask the agent to scope a product idea.
 
 ### npx skills
 
@@ -90,7 +94,7 @@ mkdir -p /path/to/other-project/.agents/skills
 cp -R .agents/skills/prdfy .agents/skills/prdfy-research .agents/skills/prdfy-module .agents/skills/prdfy-writer .agents/skills/prdfy-c4 .agents/skills/prdfy-verifier .agents/skills/prdfy-review /path/to/other-project/.agents/skills/
 ```
 
-Cursor also loads `.cursor/skills/prdfy/`. Claude Code loads `.claude/skills/prdfy/`. Use whichever directory that project already uses.
+Cursor also loads skills from `.cursor/skills/`. Claude Code loads them from `.claude/skills/`. Use whichever directory that project already uses, and copy all seven folders into it.
 
 ### Every project on your machine
 
@@ -101,7 +105,7 @@ mkdir -p ~/.agents/skills
 cp -R .agents/skills/prdfy .agents/skills/prdfy-research .agents/skills/prdfy-module .agents/skills/prdfy-writer .agents/skills/prdfy-c4 .agents/skills/prdfy-verifier .agents/skills/prdfy-review ~/.agents/skills/
 ```
 
-The same folder works at `~/.cursor/skills/prdfy/` for Cursor and `~/.claude/skills/prdfy/` for Claude Code. On Windows, `~` is your user profile (`C:\Users\<you>`).
+The same seven folders work under `~/.cursor/skills/` for Cursor and `~/.claude/skills/` for Claude Code. On Windows, `~` is your user profile (`C:\Users\<you>`).
 
 User-level skills stay on that machine. Commit the project copy if teammates should get the skill with the repo.
 
@@ -109,7 +113,27 @@ User-level skills stay on that machine. Commit the project copy if teammates sho
 
 Point the agent at `SKILL.md`, or paste its body into the agent instructions. Keep one orchestrator in front of the user and delegate every step to a sub-agent.
 
-Start from a product idea, not from a request to write code. If a technology is already chosen, the skill records it as your constraint and still describes the architecture in role names.
+Start from a product idea, not from a request to write code. If a technology is already chosen, the skill records it as your constraint and still describes the architecture in role names. If the host cannot launch sub-agents, the orchestrator says so and runs each step inline as a separate role.
+
+## Development
+
+The skills need no runtime. The repository has two check scripts. Run them with [uv](https://docs.astral.sh/uv/):
+
+```bash
+# Role lists and protocol versions agree across the seven skills
+uv run scripts/check_skills.py
+
+# Static checks on a generated specification folder
+uv run scripts/check_spec.py path/to/prdfy-spec
+
+# Tests for both scripts, against tests/fixtures/minimal-spec
+uv run --with pytest --with pyyaml pytest tests
+```
+
+Evals for the orchestrator live in [`.agents/skills/prdfy/evals/`](.agents/skills/prdfy/evals/):
+
+- `evals.json` holds the end-to-end scenarios, in the `skill-creator` format.
+- `trigger-evals.json` holds the description trigger set, for `skill-creator`'s `run_eval.py` and `run_loop.py`.
 
 ## License
 
