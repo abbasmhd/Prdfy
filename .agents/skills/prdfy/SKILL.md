@@ -16,7 +16,7 @@ description: >
   codebase, to plan sprints for a product that already ships, or when the
   user only wants code.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   protocol: "1"
   alias: Predify
 compatibility: >
@@ -159,7 +159,7 @@ The orchestrator then:
 1. Ask the user those questions, unchanged, in its own voice. Do not add questions.
 2. Show the suggestions the sub-agent supplied under each question, unchanged, and mark them as suggestions, not decisions. Do not add, drop, or reword a suggestion. If a question has none, show none. When the host has a multiple-choice question tool, use it: each question becomes one prompt, and its suggestions become the options. Otherwise number the suggestions in text.
 3. Invite the user to pick a suggestion, edit one, or write a different answer.
-4. Wait for the answer. Append the question and the user's answer to memory. Relaunch the sub-agent that asked, with the updated memory and the answer verbatim. If the host can resume a sub-agent, resuming instead is fine. Do not send an unselected suggestion.
+4. Wait for the answer. Append the question and the user's answer to memory. Relaunch the sub-agent that asked, with the updated memory and the answer verbatim. If the host can resume a sub-agent, resuming instead is fine. Do not send an unselected suggestion. When a relay answer is Unknown, still write the assumption rows the Module sub-agent returns into memory. Do not invent the row.
 5. Sub-agents that are already running keep running. Do not launch a sub-agent that needs this answer until the answer is in memory.
 
 If two relays arrive in the same turn, do not merge their questions into one set. Ask the first relay as its own turn and wait. Record the answer and relaunch that sub-agent. Then ask the second relay. More than two are asked one at a time, in the order they arrived. If you cannot tell which arrived first, ask a Module relay before a Writer or C4 relay, and otherwise use the deliverable order in section 4.
@@ -189,7 +189,7 @@ Do not substitute a general research, brainstorming, PRD, or C4 skill. Those ski
 
 Every Prdfy skill declares `metadata.protocol`. The return blocks are a protocol, so a mismatched skill fails silently. Before the first launch in a session, read each sub-skill's frontmatter. If a sub-skill's protocol is missing or differs from this skill's, stop and tell the user which skill to update.
 
-Module work stays in order. Once Research for the active module has been launched, it finishes before the Module sub-agent proposes more questions. The Vision brief asks its first questions before any research, because the category is not known yet. Writing order, verification, and retries are described under Execution.
+Module work stays in order. Once Research for the active module has been launched, it finishes before the Module sub-agent proposes more questions. The Vision brief asks its first questions before any research, because the category is not known yet. For Architectural Boundaries, launch boundaries research before the module proposes questions. Vision waits only for its first questions. Do not read the module skill to decide this. Writing order, verification, and retries are described under Execution.
 
 ### When the host cannot launch sub-agents
 
@@ -251,12 +251,12 @@ Create `prdfy-spec/memory.md` when it does not exist. Write the user's opening w
 
 For the active module, set Phase to `interview` and record the Active module. Then:
 
-1. For Risk and Compliance, before any question in that module, launch Research in mode `compliance` when no compliance findings file exists, and again when memory names a place the product serves that the latest compliance file does not cover. A file that only says jurisdiction was not named does not cover a place named later. Do not launch it again while jurisdiction is still unnamed and that file already exists. Do not read the module skill to decide this. Pass the markdown file it wrote. Also launch Research when the Module sub-agent returns `NEED_RESEARCH`, and pass that file.
+1. For Risk and Compliance, before any question in that module, launch Research in mode `compliance` when no compliance findings file exists, and again when memory names a place the product serves that the latest compliance file does not cover. A file that only says jurisdiction was not named does not cover a place named later. Do not launch it again while jurisdiction is still unnamed and that file already exists. Do not read the module skill to decide this. Pass the markdown file it wrote. For Architectural Boundaries, before the module proposes questions, pass a `research-boundaries` findings file. When none exists, launch Research in mode `boundaries` and pass the file it wrote. Vision waits only for its first questions. Do not read the module skill to decide this. Also launch Research when the Module sub-agent returns `NEED_RESEARCH`, and pass that file.
 2. Launch the Module sub-agent with the brief, the memory file, the research, the user's latest words, and the next free `D-` and `A-` IDs.
 3. On `NEED_USER`, run the relay. Then launch that same module again with the answer.
 4. Repeat until it returns `MODULE_READY`, or the user says to skip.
 5. On a skip of the active module, launch the same module again with the instruction `skip`. It proposes an assumption for every missing exit item and returns `MODULE_READY`. Do not write the assumptions yourself. Do not write that skip under Rules. Write a Rule only when the user says to skip that topic from then on.
-6. Write the returned decision rows into Decisions and the assumption rows into Assumptions, using the IDs the module returned. Show the summary and those new rows. Also show the two closing questions and their suggestions, exactly as the sub-agent supplied them: what to correct, and whether to proceed. Do not attach the next module.
+6. Write the returned decision rows into Decisions and the assumption rows into Assumptions, using the IDs the module returned. When a relay answer is Unknown, still write those assumption rows. Do not invent the row. Show the summary and those new rows. Also show the two closing questions and their suggestions, exactly as the sub-agent supplied them: what to correct, and whether to proceed. Do not attach the next module.
 7. Relay the reply. Start the next module only after the user proceeds.
 
 `MODULE_READY` contains the summary, the new decision and assumption rows, and those two closing questions with their suggestions. It is not permission to draft. The Module sub-agent follows `prdfy-module`, which holds the six briefs: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries.

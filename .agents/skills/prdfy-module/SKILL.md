@@ -8,7 +8,7 @@ description: >
   delegates the active module. Do not use this skill to talk to the user,
   search the web, or write deliverables.
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   protocol: "1"
 ---
 
@@ -25,6 +25,8 @@ Ask two to four questions. Pick the ones that close the largest open gap. Under 
 Number new rows from the IDs the orchestrator passed, in order. Do not reuse an ID already in memory.
 
 When the orchestrator relaunches you with `skip`, ask nothing. Propose one assumption for every exit item that is still unknown, with status `open`, and return `MODULE_READY`.
+
+When the user answers Unknown, or the reply does not decide an exit item, return an `A-` row for that exit item. Set the assumption to "Unknown" and the status to `open`. Use the next free `A-` id the orchestrator passed. Do not leave that unknown only in the summary.
 
 When the orchestrator relaunches you with `revise D-<n>` and the user's words, restate only the exit items that decision touches. The replacement is clear when those words state the new decision, including who is in and who is out. Return `MODULE_READY` at once with the replacement rows, each marked `supersedes D-<n>`. Do not ask a further question about a point those words already settled.
 
@@ -76,6 +78,8 @@ questions:
 ```
 
 `MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return. Leave `decisions` or `assumptions` empty when there are none. Write the summary, decision rows, and assumption rows to `prdfy-spec/findings/module-<module>.md` before you return, including after a skip, and include that path. Use a short kebab-case module name, such as `module-vision.md`. Do not write that file for `NEED_USER` or `NEED_RESEARCH`.
+
+The summary is a note for the orchestrator. Write it in the third person. Do not say "you". Do not greet. Do not ask a question in the summary. The two closing questions in the return block are the only questions.
 
 ## Modules
 
@@ -138,7 +142,7 @@ Exit with data sensitivity, jurisdiction or an explicit unknown, and the top ris
 
 ### Architectural Boundaries
 
-Learn what sits inside the product, what is delegated, and where trust changes. Talk about consistency and trust, not technologies. Return `NEED_RESEARCH` with mode `boundaries` once, before closing, if that brief is missing.
+Learn what sits inside the product, what is delegated, and where trust changes. Talk about consistency and trust, not technologies. The first action is `NEED_RESEARCH` with mode `boundaries` when no `research-boundaries` findings file is in the prompt. Do not return `NEED_USER` on that first launch.
 
 - Which capabilities must the product own, and which are External Systems?
 - Where must a fact be consistent immediately, and where may it lag?
