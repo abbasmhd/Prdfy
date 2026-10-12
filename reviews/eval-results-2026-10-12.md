@@ -402,3 +402,15 @@ New findings from this continuation:
 - `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-pressure-test.md`
 
 `research-boundaries.md` remains at `C:\tmp\prdfy-interview-2026-10-12\prdfy-spec\findings\research-boundaries.md`.
+
+## Contract slips
+
+The sub-agent interview was not rerun.
+
+Three rules changed. `metadata.protocol` stays "1". `prdfy` is 2.2.0. `prdfy-module` is 1.5.0.
+
+- Architectural Boundaries now starts with the boundaries brief. In `prdfy-module`, under Architectural Boundaries, the first action is `NEED_RESEARCH` mode `boundaries` when no `research-boundaries` findings file is in the prompt. That launch does not return `NEED_USER`. In `prdfy`, under Sub-agents and under Run the six modules, the orchestrator launches boundaries research before the module proposes questions, and passes a `research-boundaries` findings file. Vision waits only for its first questions. The orchestrator does not read the module skill to decide this.
+- The module summary is a note for the orchestrator. In `prdfy-module`, under Return one of these, the summary is third person. It does not say "you", greet, or ask a question. The two closing questions stay in the return block. The orchestrator still shows that summary.
+- An answer of Unknown is an assumption row. In `prdfy-module`, when the user answers Unknown, or the reply does not decide an exit item, the return includes an `A-` row with assumption "Unknown" and status open, using the next free `A-` id. In `prdfy`, under Relay and under Run the six modules, an Unknown relay answer still writes the module's returned assumption rows into memory. The orchestrator does not invent the row.
+
+`quick_validate.py` reported valid for both skills. `scripts/check_skills.py` reported protocol 1. `pytest tests -q` reported 27 passed.
