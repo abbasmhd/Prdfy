@@ -32,10 +32,10 @@
     {
       "id": 3,
       "prompt": "prdfy: scope a tool that helps small bakeries take pre-orders. Note: web search is not available in this environment, do not try to use it.",
-      "expected_output": "Research reports that search is unavailable and marks its claims unverified; no market statistic, competitor, or price is invented.",
+      "expected_output": "The first turn asks Vision questions and writes no research file, because the category is not known yet. No market statistic, competitor, or price is invented.",
       "files": [],
       "expectations": [
-        "Any prdfy-spec/findings/research-*.md file has 'yes' under Unverified and says search was unavailable",
+        "No prdfy-spec/findings/research-*.md file exists yet, because Vision asks its first questions before any research",
         "No file states a market size, statistic, price, or named competitor without a source",
         "The reply to the user asks between two and four Vision questions"
       ]
@@ -84,7 +84,7 @@
     {
       "id": 7,
       "prompt": "Setup: copy the contents of evals/files/writing/ into prdfy-spec/ in the working folder, then act on this message.\n\nlet's continue prdfy",
-      "expected_output": "The orchestrator reads Progress, says in one sentence that the run is in the writing phase, and launches writers only for the pending files 03 to 06, then C4, then the decision log and README pair.",
+      "expected_output": "The orchestrator reads Progress, says in one sentence that the run is in the writing phase, runs any missing pressure-test and compliance research before writers, and does not write 07 before 06 or the decision log and README while earlier files or a relay are still open.",
       "files": [
         "evals/files/writing/memory.md",
         "evals/files/writing/01-business-plan.md",
@@ -94,8 +94,8 @@
         "The reply says in one sentence that the run is in the writing phase",
         "The orchestrator does not restart the interview or ask Vision questions",
         "01-business-plan.md and 02-prd.md are not rewritten",
-        "07-c4-architecture.md is written only after 06-domain-architecture.md",
-        "00-decision-log.md and README.md are written last, in one Writer launch",
+        "07-c4-architecture.md does not exist unless 06-domain-architecture.md already exists. While a relay is unanswered, 07 is not written",
+        "00-decision-log.md and README.md do not exist while any of 01 to 07 is still pending or a relay is unanswered",
         "Every file written follows the H1 and H2 headings in the prdfy-writer or prdfy-c4 contract"
       ]
     }

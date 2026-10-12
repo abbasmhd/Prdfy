@@ -27,7 +27,7 @@ Not applicable: the committee does not charge for the product (assumption, A-001
 
 ## Success metrics
 
-No double booking is confirmed during the MVP (user, D-003).
+The MVP is request, approve, and cancel for single bookings (user, D-003).
 
 ## Assumptions
 
