@@ -294,3 +294,11 @@ No `prdfy-spec/findings/` folder was created. `memory.md` holds R-001 (do not us
 | No prdfy-spec/findings/research-*.md file exists yet | PASS | The scratch tree has memory.md, reply.md, and transcript.md only. No findings file. |
 | No file states a market size, statistic, price, or named competitor without a source | PASS | A scan of the scratch folder found none of those claims. Suggestions are labelled assumption. |
 | The reply asks between two and four Vision questions | PASS | reply.md asks four: who feels it, what outcome changes, who pays, and success in one sentence. |
+
+## Trigger evals
+
+`run_single_query` in `.agents/skills/skill-creator/scripts/run_eval.py` still waits on `select()` when the pipe is selectable, then reads with `os.read`. If `select()` raises `OSError` (a Windows pipe is not a socket; WinError 10093 or 10038), stdout is read on a thread into a queue instead. A failed read raises `QueryUnobservable`. `run_eval` does not store that as `False`. A query with no observation is not scored, so a negative query cannot pass only because the pipe could not be read. Lines already sitting on stdout after the process has exited are parsed before the function returns.
+
+Unit tests: `uv run --python 3.11 --with pytest --with pyyaml pytest tests -q` — 21 passed. `tests/test_run_eval.py` raises `select()`, makes the pipe unreadable, and checks that `run_single_query` and `run_eval` raise `QueryUnobservable` instead of passing `should_trigger: false`. Another case still returns triggered when `select()` fails but the pipe can be read.
+
+Live `claude -p` did not reach a model. `claude` is 2.1.241. Nothing listens on `127.0.0.1:3001` (curl exit 7). One trigger-eval query, `prdfy: a marketplace for local tutors`, printed `[claude-code:unrecognized_model] {"model":"auto","query_source":"sdk"}` and had not exited after 20 seconds, so the process was stopped. The other 19 queries were not run. No trigger score. The prdfy skill description was not changed.
