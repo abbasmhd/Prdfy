@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 """Run trigger evaluation for a skill description.
 
-Tests whether a skill's description causes Claude to trigger (read the skill)
+Tests whether a skill description causes an agent to trigger (read the skill)
 for a set of queries. Outputs results as JSON.
+
+The agent is not chosen for you. Set PRDFY_AGENT_CMD, or pass --agent-cmd, to
+the command that runs one query. Put {query} where the query text should be
+inserted. {model} is replaced when --model is set, and omitted otherwise.
+{skill_file} is the temporary command file written under .claude/commands/ so
+the agent can see the description under test. If neither the variable nor
+--agent-cmd is set, the script exits with an error that names PRDFY_AGENT_CMD.
+Stdout from that process is the only trigger signal. This script does not
+score a query on its own.
 """
 
 import argparse
@@ -10,6 +19,7 @@ import json
 import os
 import queue
 import select
+import shlex
 import subprocess
 import sys
 import threading
@@ -21,11 +31,68 @@ from pathlib import Path
 from scripts.utils import parse_skill_md
 
 
+class AgentCommandError(Exception):
+    """The host did not provide a usable agent command."""
+
+
+def agent_command_template(agent_cmd: str | None = None) -> str:
+    """Return the agent command template from an argument or PRDFY_AGENT_CMD."""
+    raw = agent_cmd if agent_cmd is not None else os.environ.get("PRDFY_AGENT_CMD")
+    raw = (raw or "").strip()
+    if not raw:
+        raise AgentCommandError(
+            "Set PRDFY_AGENT_CMD to the command that runs one trigger query, "
+            "or pass --agent-cmd. Include {query} where the query text goes. "
+            "No agent command is built in."
+        )
+    if "{query}" not in raw:
+        raise AgentCommandError(
+            "PRDFY_AGENT_CMD must include {query} where the query text goes."
+        )
+    return raw
+
+
+def build_agent_argv(
+    template: str,
+    query: str,
+    model: str | None = None,
+    skill_file: str | None = None,
+) -> list[str]:
+    """Split an agent command template and fill its placeholders."""
+    try:
+        parts = shlex.split(template)
+    except ValueError as exc:
+        raise AgentCommandError(f"PRDFY_AGENT_CMD could not be parsed: {exc}") from exc
+
+    argv: list[str] = []
+    for part in parts:
+        if "{query}" in part:
+            part = part.replace("{query}", query)
+        if "{skill_file}" in part:
+            if not skill_file:
+                raise AgentCommandError(
+                    "PRDFY_AGENT_CMD uses {skill_file}, but no skill file was written."
+                )
+            part = part.replace("{skill_file}", skill_file)
+        if "{model}" in part:
+            if not model:
+                if argv and argv[-1] in {"--model", "-m"}:
+                    argv.pop()
+                continue
+            part = part.replace("{model}", model)
+        if part == "":
+            continue
+        argv.append(part)
+    if not argv:
+        raise AgentCommandError("PRDFY_AGENT_CMD did not produce a command.")
+    return argv
+
+
 def find_project_root() -> Path:
     """Find the project root by walking up from cwd looking for .claude/.
 
-    Mimics how Claude Code discovers its project root, so the command file
-    we create ends up where claude -p will look for it.
+    The temporary command file is written under that root's .claude/commands
+    directory. PRDFY_AGENT_CMD chooses the process that answers the query.
     """
     current = Path.cwd()
     for parent in [current, *current.parents]:
@@ -73,9 +140,12 @@ def _observe(fetch):
     """Return a trigger bool, or None when output could not be read.
 
     None is not a negative trigger. Callers must not count it as not triggered.
+    A missing agent command is a configuration error, not a failed trigger.
     """
     try:
         return fetch()
+    except AgentCommandError:
+        raise
     except (QueryUnobservable, OSError) as exc:
         print(f"Warning: query output could not be read: {exc}", file=sys.stderr)
         return None
@@ -91,15 +161,17 @@ def run_single_query(
     timeout: int,
     project_root: str,
     model: str | None = None,
+    agent_cmd: str | None = None,
 ) -> bool:
     """Run a single query and return whether the skill was triggered.
 
-    Creates a command file in .claude/commands/ so it appears in Claude's
-    available_skills list, then runs `claude -p` with the raw query.
-    Uses --include-partial-messages to detect triggering early from
-    stream events (content_block_start) rather than waiting for the
-    full assistant message, which only arrives after tool execution.
+    Writes a command file under .claude/commands/ for the description under
+    test, then runs the command from PRDFY_AGENT_CMD or agent_cmd. Early
+    stream events (content_block_start) count as a trigger when they name
+    that command file, so the check does not wait for the full assistant
+    message.
     """
+    template = agent_command_template(agent_cmd)
     unique_id = uuid.uuid4().hex[:8]
     clean_name = f"{skill_name}-skill-{unique_id}"
     project_commands_dir = Path(project_root) / ".claude" / "commands"
@@ -119,28 +191,25 @@ def run_single_query(
         )
         command_file.write_text(command_content)
 
-        cmd = [
-            "claude",
-            "-p", query,
-            "--output-format", "stream-json",
-            "--verbose",
-            "--include-partial-messages",
-        ]
-        if model:
-            cmd.extend(["--model", model])
+        cmd = build_agent_argv(template, query, model, str(command_file))
 
-        # Remove CLAUDECODE env var to allow nesting claude -p inside a
-        # Claude Code session. The guard is for interactive terminal conflicts;
-        # programmatic subprocess usage is safe.
+        # Drop CLAUDECODE when it is set so a nested Claude Code process is
+        # allowed to start. Other agent commands ignore the missing variable.
         env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            cwd=project_root,
-            env=env,
-        )
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                cwd=project_root,
+                env=env,
+            )
+        except FileNotFoundError as exc:
+            raise QueryUnobservable(
+                f"agent command {cmd[0]!r} was not found. "
+                "PRDFY_AGENT_CMD must name an agent CLI installed on this host."
+            ) from exc
 
         triggered = False
         start_time = time.time()
@@ -174,7 +243,7 @@ def run_single_query(
                             continue
                         if isinstance(chunk, Exception):
                             raise QueryUnobservable(
-                                "could not read claude output after select() failed"
+                                "could not read agent output after select() failed"
                             ) from chunk
 
                     if not chunk:
@@ -295,8 +364,10 @@ def run_eval(
     runs_per_query: int = 1,
     trigger_threshold: float = 0.5,
     model: str | None = None,
+    agent_cmd: str | None = None,
 ) -> dict:
     """Run the full eval set and return results."""
+    template = agent_command_template(agent_cmd)
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         future_to_info = {}
         for item in eval_set:
@@ -309,6 +380,7 @@ def run_eval(
                     timeout,
                     str(project_root),
                     model,
+                    template,
                 )
                 future_to_info[future] = (item, run_idx)
 
@@ -348,9 +420,24 @@ def main():
     parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
-    parser.add_argument("--model", default=None, help="Model to use for claude -p (default: user's configured model)")
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Optional model name. Replaces {model} in the agent command.",
+    )
+    parser.add_argument(
+        "--agent-cmd",
+        default=None,
+        help="Command that runs one query. Defaults to PRDFY_AGENT_CMD. Include {query}.",
+    )
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
+
+    try:
+        agent_command_template(args.agent_cmd)
+    except AgentCommandError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     eval_set = json.loads(Path(args.eval_set).read_text())
     skill_path = Path(args.skill_path)
@@ -376,6 +463,7 @@ def main():
         runs_per_query=args.runs_per_query,
         trigger_threshold=args.trigger_threshold,
         model=args.model,
+        agent_cmd=args.agent_cmd,
     )
 
     if args.verbose:

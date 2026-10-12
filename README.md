@@ -135,7 +135,7 @@ CI runs these checks on every push and pull request to `main`.
 Evals for the orchestrator live in [`.agents/skills/prdfy/evals/`](.agents/skills/prdfy/evals/):
 
 - `evals.json` holds the end-to-end scenarios, in the `skill-creator` format.
-- `trigger-evals.json` holds the description trigger set, for `skill-creator`'s `run_eval.py` and `run_loop.py`.
+- `trigger-evals.json` holds the description trigger set, for `skill-creator`'s `run_eval.py` and `run_loop.py`. `run_eval.py` launches the command in `PRDFY_AGENT_CMD` (or `--agent-cmd`), and `{query}` marks where the query text goes. If neither is set, the script exits with an error that names `PRDFY_AGENT_CMD` and does not launch a built-in client.
 
 ## License
 

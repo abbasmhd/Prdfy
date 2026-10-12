@@ -100,9 +100,10 @@ def _trigger_line() -> bytes:
     return (json.dumps(event) + "\n").encode()
 
 
-def _install_claude(monkeypatch, payload: bytes, fail: bool, select_error: OSError | None):
-    calls = {"select": 0}
+def _install_agent(monkeypatch, payload: bytes, fail: bool, select_error: OSError | None):
+    calls = {"select": 0, "argv": None}
     process = _Process(_Stdout(payload, fail))
+    monkeypatch.setenv("PRDFY_AGENT_CMD", "agent-under-test {query}")
 
     def fake_select(*_args, **_kwargs):
         calls["select"] += 1
@@ -110,7 +111,8 @@ def _install_claude(monkeypatch, payload: bytes, fail: bool, select_error: OSErr
             raise select_error
         return ([process.stdout], [], [])
 
-    def fake_popen(*_args, **_kwargs):
+    def fake_popen(cmd, *_args, **_kwargs):
+        calls["argv"] = list(cmd)
         return process
 
     monkeypatch.setattr(run_eval.select, "select", fake_select)
@@ -120,7 +122,7 @@ def _install_claude(monkeypatch, payload: bytes, fail: bool, select_error: OSErr
 
 
 def test_windows_select_error_is_not_scored_as_not_triggered(monkeypatch, tmp_path):
-    calls, _process = _install_claude(
+    calls, _process = _install_agent(
         monkeypatch,
         payload=b"",
         fail=True,
@@ -136,6 +138,8 @@ def test_windows_select_error_is_not_scored_as_not_triggered(monkeypatch, tmp_pa
             str(tmp_path),
         )
     assert calls["select"] >= 1
+    assert calls["argv"] == ["agent-under-test", NEGATIVE_QUERY]
+    assert "claude" not in calls["argv"]
 
     monkeypatch.setattr(run_eval, "ProcessPoolExecutor", _ImmediatePool)
     monkeypatch.setattr(run_eval, "as_completed", lambda futures: list(futures))
@@ -157,7 +161,7 @@ def test_windows_select_error_is_not_scored_as_not_triggered(monkeypatch, tmp_pa
 
 
 def test_windows_select_error_still_observes_a_trigger(monkeypatch, tmp_path):
-    calls, _process = _install_claude(
+    calls, _process = _install_agent(
         monkeypatch,
         payload=_trigger_line(),
         fail=False,
@@ -172,12 +176,14 @@ def test_windows_select_error_still_observes_a_trigger(monkeypatch, tmp_path):
         str(tmp_path),
     )
     assert calls["select"] >= 1
+    assert calls["argv"][0] == "agent-under-test"
+    assert "claude" not in calls["argv"]
     assert triggered is True
 
 
 def test_ready_select_still_observes_a_trigger(monkeypatch, tmp_path):
     payload = _trigger_line()
-    calls, _process = _install_claude(
+    calls, _process = _install_agent(
         monkeypatch,
         payload=payload,
         fail=False,
@@ -196,7 +202,42 @@ def test_ready_select_still_observes_a_trigger(monkeypatch, tmp_path):
         str(tmp_path),
     )
     assert calls["select"] >= 1
+    assert calls["argv"][0] == "agent-under-test"
+    assert "claude" not in calls["argv"]
     assert triggered is True
+
+
+def test_missing_agent_command_names_the_variable_and_does_not_spawn(monkeypatch, tmp_path):
+    monkeypatch.delenv("PRDFY_AGENT_CMD", raising=False)
+
+    def fail_popen(*_args, **_kwargs):
+        raise AssertionError("spawned a process without an agent command")
+
+    monkeypatch.setattr(run_eval.subprocess, "Popen", fail_popen)
+    with pytest.raises(run_eval.AgentCommandError, match="PRDFY_AGENT_CMD") as exc_info:
+        run_eval.run_single_query(
+            NEGATIVE_QUERY,
+            "prdfy",
+            "desc",
+            2,
+            str(tmp_path),
+        )
+    assert "claude" not in str(exc_info.value).lower()
+
+
+def test_agent_command_placeholder_fills_query_and_model():
+    argv = run_eval.build_agent_argv(
+        "agent-under-test {query} --model {model}",
+        "hello there",
+        None,
+    )
+    assert argv == ["agent-under-test", "hello there"]
+    argv = run_eval.build_agent_argv(
+        "agent-under-test {query} --model {model}",
+        "hello there",
+        "some-model",
+    )
+    assert argv == ["agent-under-test", "hello there", "--model", "some-model"]
 
 
 def test_real_pipe_stays_readable_when_select_cannot_watch_it():
