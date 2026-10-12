@@ -16,7 +16,7 @@ description: >
   codebase, to plan sprints for a product that already ships, or when the
   user only wants code.
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
   protocol: "1"
   alias: Predify
 compatibility: >
@@ -68,6 +68,8 @@ The orchestrator keeps `prdfy-spec/memory.md` so a later turn does not forget an
 
 Record only what was actually said or confirmed. Do not store an unselected suggestion as a decision.
 
+Words the user offers without being asked go under Unprompted, before the next launch. That includes the opening pitch and a correction that is not the answer to a question you asked. Do not invent a Questions and answers row for them. An answer to a question you asked goes under Questions and answers. If an older memory file has no Unprompted section, add it before the next launch.
+
 ```markdown
 # Prdfy memory
 
@@ -85,6 +87,11 @@ Rules the user imposed on this run. Later questions and deliverables obey them.
 | ID | Module | Question | Answer |
 | --- | --- | --- | --- |
 | QA-001 | Vision | <question asked> | <answer the user gave> |
+
+## Unprompted
+Words the user offered without being asked. Not a question and not an answer. Sub-agents read them. Do not copy them into Questions and answers.
+
+- <the user's words>
 
 ## Assumptions
 | ID | Module | Exit item | Assumption | Status |
@@ -115,13 +122,17 @@ In Progress, `Phase` is `interview`, `pressure-test`, `writing`, `verify`, `revi
 
 Only the orchestrator allocates IDs. Pass the next free `D-` and `A-` IDs in every Module brief. Modules run one at a time, so their IDs cannot collide. Never reuse an ID. A gap left by a rejected row is fine. The orchestrator numbers `R-` and `QA-` rows itself, and the `D-` rows it records during writing and review.
 
-A rule is anything the user tells the orchestrator to keep doing or stop doing: a naming preference, a topic to skip, a technology they already chose, or a constraint on the interview. Write it under Rules even when it is not a product decision. If a later relay violates a rule, send that question back to the sub-agent instead of asking the user again.
+A rule is anything the user tells the orchestrator to keep doing or stop doing: a naming preference, a technology they already chose, or a constraint on the interview. A topic the user says to skip from then on is a Rule. Skipping the active module once is not a Rule. Write a rule under Rules even when it is not a product decision. If a later relay violates a rule, send that question back to the sub-agent instead of asking the user again.
 
-When the host cannot write files, keep the same five sections (Rules, Decisions, Questions and answers, Assumptions, Progress) in the conversation and say so once. Pass that text to sub-agents in place of the file.
+When the host cannot write files, keep the same six sections (Rules, Decisions, Questions and answers, Unprompted, Assumptions, Progress) in the conversation and say so once. Pass that text to sub-agents in place of the file.
 
 ### Changing an earlier decision
 
-When a reply changes or contradicts a confirmed decision, do not edit that row. Relaunch the module that owns it with `revise D-<n>` and the user's words. It returns `MODULE_READY` with replacement rows marked `supersedes D-<n>`. Write the new rows, set the old row to `superseded`, and fill in its Superseded by cell. Then mark as `stale` every file in Progress whose Cites include the old ID. Return to the active module afterwards. Rewrite and verify a `stale` file again before the run is done.
+When a reply changes or contradicts a confirmed decision, do not edit that row. If those words were not the answer to a question you asked, record them under Unprompted before the next launch. Do not invent a Questions and answers row. Do not change Phase or Active module.
+
+Relaunch the module that owns the decision with `revise D-<n>` and the user's words. If the user stated the new decision, the module returns `MODULE_READY` at once with replacement rows marked `supersedes D-<n>`. Write the new rows, set the old row to `superseded`, and fill in its Superseded by cell. Do not ask the closing questions in that return. Do not restart the revised module, and do not restart the active module. Continue the active module from where it stood. Then mark as `stale` every file in Progress whose Cites include the old ID. Rewrite and verify a `stale` file again before the run is done.
+
+If the module returns `NEED_USER`, the replacement itself is ambiguous. Relay only those questions. Do not merge them with the active module's questions. After the answer, relaunch the same revise. Active module stays unchanged.
 
 ### Relay
 
@@ -150,6 +161,8 @@ The orchestrator then:
 3. Invite the user to pick a suggestion, edit one, or write a different answer.
 4. Wait for the answer. Append the question and the user's answer to memory. Relaunch the sub-agent that asked, with the updated memory and the answer verbatim. If the host can resume a sub-agent, resuming instead is fine. Do not send an unselected suggestion.
 5. Sub-agents that are already running keep running. Do not launch a sub-agent that needs this answer until the answer is in memory.
+
+If two relays arrive in the same turn, do not merge their questions into one set. Ask the first relay as its own turn and wait. Record the answer and relaunch that sub-agent. Then ask the second relay. More than two are asked one at a time, in the order they arrived. If you cannot tell which arrived first, ask a Module relay before a Writer or C4 relay, and otherwise use the deliverable order in section 4.
 
 A relay may break the count (fewer than two or more than four questions, or more than four suggestions under a question) or break a Rule. Send it back once and say what to correct. If the second return still breaks a count or a Rule, relay the first four valid questions and drop the rest. If fewer than two remain, ask the ones that do. Never rewrite a question or a suggestion yourself.
 
@@ -180,7 +193,7 @@ Module work stays in order. Once Research for the active module has been launche
 
 ### When the host cannot launch sub-agents
 
-Say so once. Then run each step inline. Read the sub-skill, act only as that role, produce only its file and its return block, and switch back to the orchestrator role before speaking to the user. Keep the same order, relay rules, and memory updates. Run each verification as its own step after the writing step, and reread the file instead of relying on what the writing step intended. Tell the user once that inline verification is weaker than a separate sub-agent.
+At the start of the first inline step, tell the user once that this host cannot launch sub-agents and that inline verification is weaker than a separate sub-agent. Do not say it before that step, and do not repeat it. Then run each step inline. Read the sub-skill, act only as that role, produce only its file and its return block, and switch back to the orchestrator role before speaking to the user. Keep the same order, relay rules, and memory updates. Run each verification as its own step after the writing step, and reread the file instead of relying on what the writing step intended.
 
 ### What the orchestrator may say
 
@@ -226,23 +239,23 @@ The orchestrator follows this sequence and delegates every product step. It read
 
 Check the sub-skill protocols first.
 
-If `prdfy-spec/memory.md` exists, read its Progress section. Tell the user in one sentence where the run stands, then continue from that phase and module. Do not restart a finished module.
+If `prdfy-spec/memory.md` exists, read its Progress section. Tell the user in one sentence where the run stands, then continue from that phase and module. Do not restart a finished module. Do not trust Phase alone. Before writing a deliverable, check the prerequisites in section 4. If one is missing, run that step first.
 
 Otherwise, tell the user the contract in a few sentences: six modules, two to four questions at a time, sub-agents do the research and writing, and eight documents and an index only after Architectural Boundaries is confirmed. Do not ask whether they want a PRD, a roadmap, and a C4 separately. Those are the exit of this skill, not optional tracks.
 
 If they are continuing an existing product, read `prdfy-spec/memory.md` first. Before any Writer runs, move the existing deliverables into `prdfy-spec/history/<YYYY-MM-DD>/`. Leave `memory.md` and `findings/` in place. Tell the Module sub-agent to interview the change. Settled facts already in memory are `user`. Do not re-litigate them.
 
-Create `prdfy-spec/memory.md` when it does not exist, then launch the Vision Module sub-agent with that file. Ask the user only the questions that sub-agent returns. Write any rule the user states into Rules before the next launch.
+Create `prdfy-spec/memory.md` when it does not exist. Write the user's opening words under Unprompted. Write any rule the user states into Rules before the next launch. Then launch the Vision Module sub-agent with that file. Ask the user only the questions that sub-agent returns.
 
 ### 2. Run the six modules
 
 For the active module, set Phase to `interview` and record the Active module. Then:
 
-1. Launch Research when this brief says to search, or when the Module sub-agent returns `NEED_RESEARCH`. Pass the markdown file it wrote.
+1. For Risk and Compliance, before any question in that module, launch Research in mode `compliance` when no compliance findings file exists, and again when memory names a place the product serves that the latest compliance file does not cover. A file that only says jurisdiction was not named does not cover a place named later. Do not launch it again while jurisdiction is still unnamed and that file already exists. Do not read the module skill to decide this. Pass the markdown file it wrote. Also launch Research when the Module sub-agent returns `NEED_RESEARCH`, and pass that file.
 2. Launch the Module sub-agent with the brief, the memory file, the research, the user's latest words, and the next free `D-` and `A-` IDs.
 3. On `NEED_USER`, run the relay. Then launch that same module again with the answer.
 4. Repeat until it returns `MODULE_READY`, or the user says to skip.
-5. On a skip, launch the same module again with the instruction `skip`. It proposes an assumption for every missing exit item and returns `MODULE_READY`. Do not write the assumptions yourself.
+5. On a skip of the active module, launch the same module again with the instruction `skip`. It proposes an assumption for every missing exit item and returns `MODULE_READY`. Do not write the assumptions yourself. Do not write that skip under Rules. Write a Rule only when the user says to skip that topic from then on.
 6. Write the returned decision rows into Decisions and the assumption rows into Assumptions, using the IDs the module returned. Show the summary and those new rows. Also show the two closing questions and their suggestions, exactly as the sub-agent supplied them: what to correct, and whether to proceed. Do not attach the next module.
 7. Relay the reply. Start the next module only after the user proceeds.
 
@@ -264,15 +277,21 @@ Findings files are notes. They do not replace the specification.
 
 The user may explicitly ask for documents before Architectural Boundaries is confirmed. In that case, set Draft to `early`. Relaunch each unfinished module with `skip`, in order, and write the assumption rows it returns. Then run the pressure-test research and continue below. Every gap is now an `A-` row the documents can cite.
 
-Set Phase to `writing`, then launch in this order:
+Before writing a file, the required findings must exist. If a prerequisite is missing, run that step first. A recorded phase of `writing` does not skip this check.
 
-1. One Writer per file for `01` to `06`, all at the same time, each following `prdfy-writer`.
+- Before any of files `01` to `06`, a `research-pressure-test` findings file must exist. If it does not, set Phase to `pressure-test`, launch that research, then return to writing.
+- Before `05-risk-compliance.md`, a `research-compliance` findings file must exist. If it does not, launch Research in mode `compliance` first. That mode does not ask for jurisdiction.
+- Before `07-c4-architecture.md`, `06-domain-architecture.md` must exist and its status must be `written` or `verified`. If it does not, write `06` first.
+
+Set Phase to `writing`, then launch in this order. Launch a Writer only for a file whose status is `pending`, `stale`, or `failed`. Leave a `written` or `verified` file as it is.
+
+1. One Writer per pending, stale, or failed file among `01` to `06`, all at the same time, each following `prdfy-writer`. `05` waits until the compliance findings exist.
 2. `prdfy-c4` for `07-c4-architecture.md`, after `06-domain-architecture.md` is written, so the C4 diagrams use the same aggregates.
 3. One Writer for the pair `00-decision-log.md` and `README.md`, after every other file is written.
 
 Give each the memory file, `prdfy-spec/findings/`, and the path or paths to write. Each `WROTE` return lists the IDs the file cites. Record them under Cites and set the file to `written`.
 
-On `NEED_USER` from a Writer or from `prdfy-c4`, relay. The other Writers keep running.
+On `NEED_USER` from a Writer or from `prdfy-c4`, relay. The other Writers keep running. If two of those relays arrive in the same turn, ask them as two turns, first relay first, as Relay describes. Do not merge the questions.
 
 - If the user answers, record the answer as a `user` decision.
 - If the user skips, add an `A-` row whose assumption is "Unknown" for that blocked decision. Do not pick a suggestion for them.

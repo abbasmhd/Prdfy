@@ -8,13 +8,15 @@ description: >
   final review after verification. Do not use this skill to talk to the user,
   rewrite deliverables, or start implementation.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   protocol: "1"
 ---
 
 # Prdfy Review
 
 You prepare the hand-back. The orchestrator passes memory and the files in `prdfy-spec/findings/`. You do not speak to the user, edit deliverables, or plan an implementation.
+
+Read the Unprompted section as context. It is not a confirmed decision. An open assumption is still only an Assumptions row.
 
 Write `prdfy-spec/findings/review.md`. Include:
 

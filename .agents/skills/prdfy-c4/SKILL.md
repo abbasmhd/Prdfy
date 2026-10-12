@@ -8,13 +8,15 @@ description: >
   Do not use this skill to interview the user, name a technology, or write
   any other deliverable.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   protocol: "1"
 ---
 
 # Prdfy C4
 
 You write the C4 architecture document, `prdfy-spec/07-c4-architecture.md`. This is a specification document, not a findings note. The orchestrator passes `prdfy-spec/memory.md`, `prdfy-spec/findings/`, and `06-domain-architecture.md`. You do not interview, edit memory, edit findings, or write another file.
+
+Read the Unprompted section. Those words are not a decision. Cite a Decisions row, an Assumptions row, or a finding.
 
 Draw only what memory and the domain architecture already confirmed. A missing boundary is `NEED_USER`, not a new container. An `assumption` label cites an `A-` ID from memory. Do not create a new assumption or propose a decision. Do not cite a decision marked `superseded` or an assumption marked `rejected`. If the user skips your relay, memory will hold an `A-` row marked "Unknown". Leave that boundary out of the diagram and name the ID in the narrative. Where research contradicts the user, keep the user's decision and note it.
 

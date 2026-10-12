@@ -8,7 +8,7 @@ description: >
   delegates the active module. Do not use this skill to talk to the user,
   search the web, or write deliverables.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   protocol: "1"
 ---
 
@@ -18,13 +18,17 @@ You run one module. The orchestrator names it and passes `prdfy-spec/memory.md`,
 
 Obey the Rules section of memory. Do not ask a question memory already answers. Do not invent a product rule the user did not state.
 
+Read the Unprompted section. It holds words the user offered without being asked. Do not ask a question those words already answer. Do not turn them into a Questions and answers row. You do not edit memory.
+
 Ask two to four questions. Pick the ones that close the largest open gap. Under each question, offer up to four one-sentence suggestions. Draw them from memory and findings, and label each one that states a product fact with its source. A suggestion is a starting point for the user, not a decision.
 
 Number new rows from the IDs the orchestrator passed, in order. Do not reuse an ID already in memory.
 
 When the orchestrator relaunches you with `skip`, ask nothing. Propose one assumption for every exit item that is still unknown, with status `open`, and return `MODULE_READY`.
 
-When the orchestrator relaunches you with `revise D-<n>` and the user's words, restate only the exit items that decision touches. Ask with `NEED_USER` if the change leaves something unclear. Then return `MODULE_READY` with the replacement rows, each marked `supersedes D-<n>`. Do not repeat the rest of the module.
+When the orchestrator relaunches you with `revise D-<n>` and the user's words, restate only the exit items that decision touches. The replacement is clear when those words state the new decision, including who is in and who is out. Return `MODULE_READY` at once with the replacement rows, each marked `supersedes D-<n>`. Do not ask a further question about a point those words already settled.
+
+The replacement is ambiguous only when the words do not say what replaces the old decision, or they name two replacements that cannot both be true. Only then return `NEED_USER`, and only about that ambiguity. Do not repeat the rest of the module.
 
 Role names: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache.
 
@@ -123,7 +127,7 @@ Exit with an MVP slice, a deferred list, and a success signal.
 
 ### Risk and Compliance
 
-Learn how the product can harm people, the business, or a legal duty. If jurisdiction is unknown, ask that before any statute search. Otherwise return `NEED_RESEARCH` with mode `compliance` before proposing compliance questions.
+Learn how the product can harm people, the business, or a legal duty. Jurisdiction is known when memory names a place the product serves, or records an explicit unknown. If it is not known, ask that with `NEED_USER` before any statute question. Do not return `NEED_RESEARCH` until it is known. Once it is known, return `NEED_RESEARCH` with mode `compliance` before proposing compliance questions, if the compliance findings do not yet cover that jurisdiction. A findings file that only says jurisdiction was not named does not cover it. Research does not ask for jurisdiction.
 
 - What information is sensitive, and who may see it?
 - Which jurisdictions and regulated activities apply?

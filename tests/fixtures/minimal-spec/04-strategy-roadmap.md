@@ -6,9 +6,11 @@ Request, approve, and cancel single bookings. It tests the belief that one appro
 
 ## Now, Next, Later
 
-- Now: single bookings (D-005).
-- Next: none confirmed.
-- Later: recurring bookings, if the MVP holds (D-003).
+| Horizon | Decisions | Source |
+| --- | --- | --- |
+| Now | D-005 | user |
+| Next | None confirmed | None confirmed |
+| Later | D-003 | user |
 
 ## Dependencies
 

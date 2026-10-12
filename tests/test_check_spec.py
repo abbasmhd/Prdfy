@@ -92,6 +92,17 @@ def test_technology_rule_allowed_in_constraints(spec, capsys):
     assert code == 0, out
 
 
+def test_blank_horizon_cell_is_rejected(spec, capsys):
+    edit(
+        spec / "04-strategy-roadmap.md",
+        "| None confirmed | None confirmed |",
+        "|  | None confirmed |",
+    )
+    code, out = run(spec, capsys)
+    assert code == 1
+    assert "empty Decisions and no research source" in out
+
+
 def test_missing_file(spec, capsys):
     (spec / "04-strategy-roadmap.md").unlink()
     code, out = run(spec, capsys)

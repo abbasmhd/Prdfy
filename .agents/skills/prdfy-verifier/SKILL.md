@@ -9,7 +9,7 @@ description: >
   orchestrator asks for verification after a writer finishes. Do not use this
   skill to rewrite a file or talk to the user.
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   protocol: "1"
 ---
 
@@ -26,6 +26,7 @@ Read the deliverable. Compare it with memory and with the heading contract for t
 Role names: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache.
 
 - Every material claim is labeled `user`, `research`, or `assumption`, or is copied from a memory row that already has a source.
+- The Unprompted section is not a source. A claim still needs a decision row, an assumption row, or a finding.
 - Every `research` claim names a source that appears in a findings file with a location. Compliance confidence is high only when that finding is `Type: primary`.
 - The H1 and every H2 in the contract are present, exactly as written and in order. No extra H2 is added. A heading that does not apply says `Not applicable` with a reason.
 - Every table with a `Decisions` column has IDs in that column, or the row cites a finding. Every ID cited exists in memory.

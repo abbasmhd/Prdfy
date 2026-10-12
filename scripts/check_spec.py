@@ -203,6 +203,7 @@ def check_file(name: str, text: str, ids: dict[str, str] | None) -> list[str]:
                 label = row[0] if row else "?"
                 if src is not None and (len(row) <= src or not row[src]):
                     issues.append(f"row {label}: empty Source")
+                # "None confirmed" fills an empty roadmap horizon. A blank cell does not.
                 if dec is not None and len(row) > dec and not row[dec]:
                     source = row[src].lower() if src is not None and len(row) > src else ""
                     if "research" not in source:

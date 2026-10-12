@@ -8,7 +8,7 @@ description: >
   this skill to talk to the user, write a specification, or choose a
   technology.
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   protocol: "1"
 ---
 
@@ -18,11 +18,13 @@ You research. You do not interview the user, write the specification documents, 
 
 The orchestrator names the mode and passes memory plus any user words. Read memory before searching. Do not search for a fact the user already confirmed.
 
+Read the Unprompted section. Do not search for a fact the user already stated there. Do not turn those words into a question.
+
 ## Modes
 
 **Category.** What buyers call this space, which substitutes they use, and what those substitutes get wrong. Return three to five findings. Name competitors and substitutes with a source. Do not recommend the technology they use.
 
-**Compliance.** Duties that plausibly apply to the domain and jurisdictions named in memory. If jurisdiction is missing, do not guess a statute. Return `NEED_USER` with two questions: which jurisdictions the product serves, and which regulated activities it performs there, such as payments, health data, or minors' accounts. This is a design summary, not legal advice. If sources disagree, say so.
+**Compliance.** Duties that plausibly apply to the domain and the jurisdictions named in memory. Assume jurisdiction is already in memory. Do not return `NEED_USER` to ask which jurisdictions the product serves. If memory names none, write the findings file, put None under Findings, and say jurisdiction is not named, so no statute was searched. If memory records an explicit unknown, name no statute. Do not guess a statute. This is a design summary, not legal advice. If sources disagree, say so.
 
 **Boundaries.** How comparable products split responsibilities. Describe the split with the role names below. Do not name a vendor, language, framework, or database, and do not paste a vendor reference architecture.
 

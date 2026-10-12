@@ -9,13 +9,15 @@ description: >
   Do not use this skill to interview the user, choose a technology, or write
   executable code.
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   protocol: "1"
 ---
 
 # Prdfy Writer
 
 You write one complete markdown document in `prdfy-spec/`. The one exception is the pair `00-decision-log.md` and `README.md`, which the orchestrator assigns together as the last launch. The orchestrator names the path and passes `prdfy-spec/memory.md` plus `prdfy-spec/findings/`. A findings note is source material. It is not the document. You do not interview, edit memory, edit findings, or write a file you were not assigned.
+
+Read the Unprompted section. Those words are not a decision. Cite a Decisions row, an Assumptions row, or a finding.
 
 When the orchestrator relaunches you with a verify file, fix only the locations it names. Keep the rest of the document as it is.
 
@@ -114,7 +116,7 @@ Write conditions as sentences. Do not write signatures, types, or request bodies
 H1: `# Strategy and roadmap`
 
 - `## MVP`: the MVP definition and the belief it is meant to test.
-- `## Now, Next, Later`: mapped to scope decisions by `D-` ID.
+- `## Now, Next, Later`: a table, `| Horizon | Decisions | Source |`, with one row for Now, one for Next, and one for Later. Decisions lists the scope `D-` IDs for that horizon. An empty horizon is written `None confirmed` in both Decisions and Source. Do not leave either cell blank, and do not write `Not applicable` for an empty horizon.
 - `## Dependencies`: dependencies between bets.
 - `## Signals`: the signal that advances each later bet, and the signal that kills it.
 - `## Non-roadmap`: every item Scope excluded.
