@@ -1,0 +1,42 @@
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Skill and spec checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Install uv and Python 3.11
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Validate skill frontmatter
+        run: |
+          status=0
+          for skill in prdfy prdfy-research prdfy-module prdfy-writer prdfy-c4 prdfy-verifier prdfy-review; do
+            echo "::group::$skill"
+            uv run --python 3.11 --with pyyaml python .agents/skills/skill-creator/scripts/quick_validate.py ".agents/skills/$skill" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Check role lists and protocol versions
+        run: uv run scripts/check_skills.py
+
+      - name: Check the minimal spec fixture
+        run: uv run scripts/check_spec.py tests/fixtures/minimal-spec
+
+      - name: Run tests
+        run: uv run --python 3.11 --with pytest --with pyyaml pytest tests -q

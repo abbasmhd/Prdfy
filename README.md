@@ -130,6 +130,8 @@ uv run scripts/check_spec.py path/to/prdfy-spec
 uv run --with pytest --with pyyaml pytest tests
 ```
 
+CI runs these checks on every push and pull request to `main`.
+
 Evals for the orchestrator live in [`.agents/skills/prdfy/evals/`](.agents/skills/prdfy/evals/):
 
 - `evals.json` holds the end-to-end scenarios, in the `skill-creator` format.
