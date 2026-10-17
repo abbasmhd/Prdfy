@@ -157,7 +157,7 @@ Two to four questions. Zero to four suggestions per question, drawn from memory 
 The orchestrator then:
 
 1. Ask the user those questions, unchanged, in its own voice. Do not add questions.
-2. Show the suggestions the sub-agent supplied under each question, unchanged, and mark them as suggestions, not decisions. Do not add, drop, or reword a suggestion. If a question has none, show none. When the host has a multiple-choice question tool, use it: each question becomes one prompt, and its suggestions become the options. Otherwise number the suggestions in text.
+2. Show the suggestions the sub-agent supplied under each question, unchanged, and mark them as suggestions, not decisions. Do not add, drop, or reword a suggestion. If a question has none, show none. Use Cursor's native structured multiple-choice question UI for every relay: each question becomes one question-card prompt, its suggestions become the selectable options, and the card must provide an `Other` option for free-text answers plus `Skip` and `Continue` controls. Do not replace the card with numbered text or another fallback.
 3. Invite the user to pick a suggestion, edit one, or write a different answer.
 4. Wait for the answer. Append the question and the user's answer to memory. Relaunch the sub-agent that asked, with the updated memory and the answer verbatim. If the host can resume a sub-agent, resuming instead is fine. Do not send an unselected suggestion. When a relay answer is Unknown, still write the assumption rows the Module sub-agent returns into memory. Do not invent the row.
 5. Sub-agents that are already running keep running. Do not launch a sub-agent that needs this answer until the answer is in memory.
@@ -256,10 +256,10 @@ For the active module, set Phase to `interview` and record the Active module. Th
 3. On `NEED_USER`, run the relay. Then launch that same module again with the answer.
 4. Repeat until it returns `MODULE_READY`, or the user says to skip.
 5. On a skip of the active module, launch the same module again with the instruction `skip`. It proposes an assumption for every missing exit item and returns `MODULE_READY`. Do not write the assumptions yourself. Do not write that skip under Rules. Write a Rule only when the user says to skip that topic from then on.
-6. Write the returned decision rows into Decisions and the assumption rows into Assumptions, using the IDs the module returned. When a relay answer is Unknown, still write those assumption rows. Do not invent the row. Show the summary and those new rows. Also show the two closing questions and their suggestions, exactly as the sub-agent supplied them: what to correct, and whether to proceed. Do not attach the next module.
+6. Write the returned decision rows into Decisions and the assumption rows into Assumptions, using the IDs the module returned. When a relay answer is Unknown, still write those assumption rows. Do not invent the row. Show the summary and those new rows. Also show the two closing questions and their suggestions, exactly as the sub-agent supplied them: what to correct, and whether to proceed. Render each closing question in Cursor's native structured multiple-choice question UI as a question card with the prompt, unchanged suggested options, an `Other` option for free-text answers, and `Skip` and `Continue` controls. Do not attach the next module.
 7. Relay the reply. Start the next module only after the user proceeds.
 
-`MODULE_READY` contains the summary, the new decision and assumption rows, and those two closing questions with their suggestions. It is not permission to draft. The Module sub-agent follows `prdfy-module`, which holds the six briefs: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries.
+`MODULE_READY` contains the summary, the new decision and assumption rows, and those two closing questions with their suggestions. It is not permission to draft. The orchestrator must render those closing questions through Cursor's native structured multiple-choice question UI, with one question card per prompt, the supplied suggestions as options, an `Other` free-text option, and `Skip` and `Continue` controls. The Module sub-agent follows `prdfy-module`, which holds the six briefs: Vision, Scope, Domain Rules, Strategy and MVP, Risk and Compliance, Architectural Boundaries.
 
 ### 3. Research before drafting
 
@@ -321,7 +321,7 @@ Set Phase to `verify`.
 
 ### 6. Hand back
 
-Set Phase to `review` and launch one Review sub-agent following `prdfy-review`. Ask the user the two questions it returns, with the suggestions it supplied. Then apply the answer:
+Set Phase to `review` and launch one Review sub-agent following `prdfy-review`. Ask the user the two questions it returns with the suggestions it supplied, rendering each in Cursor's native structured multiple-choice question UI as a question card with the unchanged prompt, suggestions as options, an `Other` option for free-text answers, and `Skip` and `Continue` controls. Then apply the answer:
 
 - **Promote `A-<n>`.** Set that row to `confirmed`, add a `user` decision that states it, and mark every file citing `A-<n>` as `stale`.
 - **Reject `A-<n>`.** Set that row to `rejected`. If the user gives a replacement, add it as a `user` decision. Mark every file citing `A-<n>` as `stale`.
