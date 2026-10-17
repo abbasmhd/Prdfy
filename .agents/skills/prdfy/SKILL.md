@@ -156,9 +156,9 @@ Two to four questions. Zero to four suggestions per question, drawn from memory 
 
 ### Native question UI
 
-Use the host harness's documented native structured multiple-choice question UI when it provides one. Do not assume that another harness exposes the same tool or controls, and do not invent an API. In a native UI, create one question card per returned question, preserve the prompt and suggestions unchanged, and use the host's documented free-text `Other` choice and `Skip`/`Continue` controls when available. A free-text answer must be passed back verbatim; `Skip` must have the same semantics as a skipped answer in this contract, and `Continue` must not be treated as selecting a suggestion.
+Use the host harness's documented native structured multiple-choice question UI when it provides one. Do not assume that another harness exposes the same tool or controls, and do not invent an API. In a native UI, create one question card per returned question, preserve the prompt and suggestions unchanged, and use the host's documented free-text `Other` choice and `Skip`/`Continue` controls when available. A free-text answer must be passed back verbatim; `Skip` must have the same semantics as a skipped answer in this contract, and `Continue` must not be treated as selecting a suggestion. If the native UI lacks any of these required controls, use the plain-text fallback for that relay rather than rendering an incomplete card.
 
-If the host has no documented native structured question UI, say so clearly once for that relay and use a plain-text fallback. Keep each prompt and every suggestion unchanged, label suggestions as suggestions, and explicitly offer free-text `Other`, `Skip`, and `Continue` semantics in the text. Never claim that a native card was rendered when it was not.
+If the host has no documented native structured question UI, or its native UI lacks a required control, say so clearly once for that relay and use a plain-text fallback. Keep each prompt and every suggestion unchanged, label suggestions as suggestions, and explicitly offer free-text `Other`, `Skip`, and `Continue` semantics in the text. Never claim that a native card was rendered when it was not.
 
 The orchestrator then:
 
