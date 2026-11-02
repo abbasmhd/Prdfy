@@ -98,6 +98,23 @@
         "00-decision-log.md and README.md do not exist while any of 01 to 07 is still pending or a relay is unanswered",
         "Every file written follows the H1 and H2 headings in the prdfy-writer or prdfy-c4 contract"
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "Setup: copy the contents of evals/files/at-review/ into prdfy-spec/ in the working folder, keeping the findings/ subfolder, then act on this message.\n\nAct as the Prdfy orchestrator in the review phase. Run the close-out using the prdfy-review skill.",
+      "expected_output": "The review sub-agent writes findings/review.md and the orchestrator asks exactly two questions, each with a None option. No deliverable is rewritten.",
+      "files": [
+        "evals/files/at-review/memory.md",
+        "evals/files/at-review/findings/verify-cross.md",
+        "evals/files/at-review/findings/research-category.md",
+        "evals/files/at-review/01-business-plan.md"
+      ],
+      "expectations": [
+        "prdfy-spec/findings/review.md exists",
+        "The reply to the user asks exactly two questions: which assumption to promote or reject, and which deliverable to revise",
+        "Each of those questions includes a None option",
+        "The orchestrator did not edit 01-business-plan.md or any other deliverable"
+      ]
     }
   ]
 }

@@ -16,7 +16,7 @@ description: >
   codebase, to plan sprints for a product that already ships, or when the
   user only wants code.
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
   protocol: "1"
   alias: Predify
 compatibility: >
@@ -188,6 +188,8 @@ Each role is its own skill. Launch a sub-agent and tell it to read and follow th
 | C4 | `prdfy-c4` | Writes the four-level C4 model |
 | Verifier | `prdfy-verifier` | Writes `findings/verify-<deliverable>.md` per file and `findings/verify-cross.md`, and edits no deliverable |
 | Review | `prdfy-review` | Writes `findings/review.md` and returns the two closing questions |
+
+Verifier and Review stay separate agents by design. The Verifier is an independent black-box check that does not share the writer's context. Review is the close-out that judges across all files, not one.
 
 Pass the memory file, the latest user words, and the skill path. Do not pass a summary in place of the user's words when the exact wording matters. Only a Module sub-agent proposes decision and assumption rows, and it returns them. The orchestrator writes those rows into memory. Writer and C4 sub-agents never propose rows. They cite memory IDs, and they relay a gap as `NEED_USER`.
 
