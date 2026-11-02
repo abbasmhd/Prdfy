@@ -16,7 +16,7 @@ description: >
   codebase, to plan sprints for a product that already ships, or when the
   user only wants code.
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
   protocol: "1"
   alias: Predify
 compatibility: >
@@ -52,7 +52,7 @@ Do not activate when the user only wants code, wants an existing codebase docume
 
 **Ask two to four questions per turn.** A Module sub-agent proposes them, each with up to four suggested answers. The orchestrator asks them and shows those suggestions unchanged. It does not write suggestions of its own. A long questionnaire produces shallow answers. The questions must close the largest gap still open in the current module. One sentence of context may precede them. If the user already answered something, the sub-agent must not ask it again.
 
-**Search, then ask.** A Research sub-agent searches during the interview and again before drafting. Search to learn the category, then ask what those findings mean for this product. Do not ask the user for facts a search should supply. If search is unavailable, the Research sub-agent says so, and every market or compliance claim is marked unverified.
+**Search, then ask.** The Module sub-agent searches for the active module. The orchestrator launches `prdfy-research` only for the standalone pressure-test before drafting. Search to learn the category, then ask what those findings mean for this product. Do not ask the user for facts a search should supply. If search is unavailable, the sub-agent that was going to search says so, and every market or compliance claim is marked unverified.
 
 **Separate evidence from invention.** Label each material claim as `user`, `research`, or `assumption`. Never invent statistics, customers, prices, quotes, or regulation names. A compliance section is a research summary for product design, not legal advice. Say that next to it.
 
@@ -172,8 +172,6 @@ If two relays arrive in the same turn, do not merge their questions into one set
 
 A relay may break the count (fewer than two or more than four questions, or more than four suggestions under a question) or break a Rule. Send it back once and say what to correct. If the second return still breaks a count or a Rule, relay the first four valid questions and drop the rest. If fewer than two remain, ask the ones that do. Never rewrite a question or a suggestion yourself.
 
-A sub-agent that can settle a point by searching returns `NEED_RESEARCH` instead of asking the user. The orchestrator launches a Research sub-agent and passes the findings file it wrote. Only a remaining gap becomes `NEED_USER`.
-
 Sub-agents that produce findings write them under `prdfy-spec/findings/`. They still do not edit `memory.md`. Pass those files onward. Do not retype them into the brief.
 
 ### Sub-agents
@@ -182,8 +180,8 @@ Each role is its own skill. Launch a sub-agent and tell it to read and follow th
 
 | Sub-agent | Skill | Does the work |
 | --- | --- | --- |
-| Research | `prdfy-research` | Searches and writes `findings/research-<mode>.md`, or a numbered rerun |
-| Module | `prdfy-module` | Runs one module and writes `findings/module-<name>.md` on close |
+| Research | `prdfy-research` | Runs the standalone pressure-test before drafting and writes `findings/research-pressure-test.md`, or a numbered rerun |
+| Module | `prdfy-module` | Runs one module, searches for that module when the brief requires it, and writes `findings/module-<name>.md` on close |
 | Writer | `prdfy-writer` | Writes one deliverable file, or the decision log and index together, never the C4 model |
 | C4 | `prdfy-c4` | Writes the four-level C4 model |
 | Verifier | `prdfy-verifier` | Writes `findings/verify-<deliverable>.md` per file and `findings/verify-cross.md`, and edits no deliverable |
@@ -197,7 +195,7 @@ Do not substitute a general research, brainstorming, PRD, or C4 skill. Those ski
 
 Every Prdfy skill declares `metadata.protocol`. The return blocks are a protocol, so a mismatched skill fails silently. Before the first launch in a session, read each sub-skill's frontmatter. If a sub-skill's protocol is missing or differs from this skill's, stop and tell the user which skill to update.
 
-Module work stays in order. Once Research for the active module has been launched, it finishes before the Module sub-agent proposes more questions. The Vision brief asks its first questions before any research, because the category is not known yet. For Architectural Boundaries, launch boundaries research before the module proposes questions. Vision waits only for its first questions. Do not read the module skill to decide this. Writing order, verification, and retries are described under Execution.
+Module work stays in order. Pass any existing findings files in the brief. Do not launch Research during the interview. The Module sub-agent searches when its brief requires it, then proposes questions. Writing order, verification, and retries are described under Execution.
 
 ### When the host cannot launch sub-agents
 
@@ -259,8 +257,8 @@ Create `prdfy-spec/memory.md` when it does not exist. Write the user's opening w
 
 For the active module, set Phase to `interview` and record the Active module. Then:
 
-1. For Risk and Compliance, before any question in that module, launch Research in mode `compliance` when no compliance findings file exists, and again when memory names a place the product serves that the latest compliance file does not cover. A file that only says jurisdiction was not named does not cover a place named later. Do not launch it again while jurisdiction is still unnamed and that file already exists. Do not read the module skill to decide this. Pass the markdown file it wrote. For Architectural Boundaries, before the module proposes questions, pass a `research-boundaries` findings file. When none exists, launch Research in mode `boundaries` and pass the file it wrote. Vision waits only for its first questions. Do not read the module skill to decide this. Also launch Research when the Module sub-agent returns `NEED_RESEARCH`, and pass that file.
-2. Launch the Module sub-agent with the brief, the memory file, the research, the user's latest words, and the next free `D-` and `A-` IDs.
+1. Pass any existing findings files for this module. Do not launch Research during the interview. The Module sub-agent searches for category, compliance, or boundaries itself when its brief requires it.
+2. Launch the Module sub-agent with the brief, the memory file, any existing findings files, the user's latest words, and the next free `D-` and `A-` IDs.
 3. On `NEED_USER`, run the relay. Then launch that same module again with the answer.
 4. Repeat until it returns `MODULE_READY`, or the user says to skip.
 5. On a skip of the active module, launch the same module again with the instruction `skip`. It proposes an assumption for every missing exit item and returns `MODULE_READY`. Do not write the assumptions yourself. Do not write that skip under Rules. Write a Rule only when the user says to skip that topic from then on.
@@ -288,7 +286,7 @@ The user may explicitly ask for documents before Architectural Boundaries is con
 Before writing a file, the required findings must exist. If a prerequisite is missing, run that step first. A recorded phase of `writing` does not skip this check.
 
 - Before any of files `01` to `06`, a `research-pressure-test` findings file must exist. If it does not, set Phase to `pressure-test`, launch that research, then return to writing.
-- Before `05-risk-compliance.md`, a `research-compliance` findings file must exist. If it does not, launch Research in mode `compliance` first. That mode does not ask for jurisdiction.
+- Before `05-risk-compliance.md`, a `research-compliance` findings file must exist. If it does not, launch the Module sub-agent for Risk and Compliance with `write-findings compliance`. It writes that file (search if jurisdiction is known; if not, write the file with no statute) and does not interview. Do not launch `prdfy-research` for this.
 - Before `07-c4-architecture.md`, `06-domain-architecture.md` must exist and its status must be `written` or `verified`. If it does not, write `06` first.
 
 Set Phase to `writing`, then launch in this order. Launch a Writer only for a file whose status is `pending`, `stale`, or `failed`. Leave a `written` or `verified` file as it is.

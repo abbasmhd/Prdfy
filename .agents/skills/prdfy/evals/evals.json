@@ -32,10 +32,10 @@
     {
       "id": 3,
       "prompt": "prdfy: scope a tool that helps small bakeries take pre-orders. Note: web search is not available in this environment, do not try to use it.",
-      "expected_output": "The first turn asks Vision questions and writes no research file, because the category is not known yet. No market statistic, competitor, or price is invented.",
+      "expected_output": "The first turn searches for the category, writes an unverified research-category file because search is unavailable, and asks Vision questions. No market statistic, competitor, or price is invented.",
       "files": [],
       "expectations": [
-        "No prdfy-spec/findings/research-*.md file exists yet, because Vision asks its first questions before any research",
+        "prdfy-spec/findings/research-category.md exists, and Unverified is yes because search was unavailable",
         "No file states a market size, statistic, price, or named competitor without a source",
         "The reply to the user asks between two and four Vision questions"
       ]

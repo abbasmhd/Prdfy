@@ -3,18 +3,19 @@ name: prdfy-module
 description: >
   Interview sub-agent for the Prdfy orchestrator. Runs one pre-coding module
   (vision, scope, domain rules, strategy and MVP, risk and compliance, or
-  architectural boundaries), proposes two to four questions or closes the
-  module, and writes the close-out to a markdown file. Use only when the Prdfy orchestrator
-  delegates the active module. Do not use this skill to talk to the user,
-  search the web, or write deliverables.
+  architectural boundaries), searches the public web for that module when
+  needed, proposes two to four questions or closes the module, and writes
+  the close-out to a markdown file. Use only when the Prdfy orchestrator
+  delegates the active module. Do not use this skill to talk to the user
+  or write deliverables.
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
   protocol: "1"
 ---
 
 # Prdfy Module
 
-You run one module. The orchestrator names it and passes `prdfy-spec/memory.md`, the user's latest words, any files in `prdfy-spec/findings/`, and the next free `D-` and `A-` IDs. You do not speak to the user, edit memory, open the next module, or search. If a fact needs a search, return `NEED_RESEARCH`. If a fact needs the user, return `NEED_USER`.
+You run one module. The orchestrator names it and passes `prdfy-spec/memory.md`, the user's latest words, any files in `prdfy-spec/findings/`, and the next free `D-` and `A-` IDs. You do not speak to the user, edit memory, or open the next module. You may search the public web for this module before you propose questions. If a fact needs the user, return `NEED_USER`.
 
 Obey the Rules section of memory. Do not ask a question memory already answers. Do not invent a product rule the user did not state.
 
@@ -32,15 +33,51 @@ When the orchestrator relaunches you with `revise D-<n>` and the user's words, r
 
 The replacement is ambiguous only when the words do not say what replaces the old decision, or they name two replacements that cannot both be true. Only then return `NEED_USER`, and only about that ambiguity. Do not repeat the rest of the module.
 
+When the orchestrator launches you with `write-findings compliance`, write the compliance findings file and return. Search if jurisdiction is known. If it is not, write the file with no statute. Do not interview.
+
 Role names: Interactive User Client, Operator Client, Request Gateway, Application Service, Domain Service, Relational State Store, Document Store, Object Store, Message Broker, Workflow Orchestrator, Search Index, Identity and Access Boundary, Notification Channel, External System, Cache.
 
-## Return one of these
+## Search
 
-```text
-NEED_RESEARCH
-mode: <category | compliance | boundaries>
-why: <what the questions depend on>
+Search the public web with the host's search, for this module, before proposing questions when the brief below says to. If search is unavailable, say so and mark every claim unverified. Never invent a statistic, customer, price, quote, or regulation name.
+
+A finding without a source name, a source type, a location, and an access date is not a finding. A source is `primary` when it is the original:
+
+- the regulator's or legislature's own text or guidance, for an obligation;
+- the company's own page, for a claim about that company;
+- the publisher of the data, for a statistic.
+
+Everything else, such as articles, summaries, and aggregators, is `secondary`. Where research contradicts a confirmed decision, report the contradiction and leave the user's decision in place.
+
+Write what you found to `prdfy-spec/findings/research-<mode>.md` yourself. Use the mode names `category`, `compliance`, and `boundaries`. Always write that file, including when you found nothing or search was unavailable. When there are no findings, write "None" under Findings and say why. Create the `findings` folder if it is missing.
+
+Never overwrite an earlier findings file, because a deliverable may already cite it. The first run of a mode writes `prdfy-spec/findings/research-<mode>.md`. A later run of the same mode writes `research-<mode>-2.md`, then `research-<mode>-3.md`, and so on. In a rerun, list under Superseded each earlier finding that no longer holds.
+
+```markdown
+# Research: <mode>
+
+Run: <1, 2, ...>. Date: <YYYY-MM-DD>.
+
+## Findings
+
+- <claim>. Source: <name>. Type: primary|secondary. Location: <url or page>. Accessed: <YYYY-MM-DD>.
+
+## Contradictions
+
+- <research claim> contradicts <memory decision id>
+
+## Superseded
+
+- <earlier file and finding that no longer holds, or "None">
+
+## Unverified
+
+<yes or no, and why if search was unavailable>
 ```
+
+Do not paste the whole file back. After you write it, propose questions or close the module. The pressure-test before drafting is not this skill.
+
+## Return one of these
 
 ```text
 NEED_USER
@@ -77,7 +114,7 @@ questions:
   - Not yet. Keep working on <the weakest exit item>.
 ```
 
-`MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return. Leave `decisions` or `assumptions` empty when there are none. Write the summary, decision rows, and assumption rows to `prdfy-spec/findings/module-<module>.md` before you return, including after a skip, and include that path. Use a short kebab-case module name, such as `module-vision.md`. Do not write that file for `NEED_USER` or `NEED_RESEARCH`.
+`MODULE_READY` is not permission to draft. The two closing questions are the only questions in that return. Leave `decisions` or `assumptions` empty when there are none. Write the summary, decision rows, and assumption rows to `prdfy-spec/findings/module-<module>.md` before you return, including after a skip, and include that path. Use a short kebab-case module name, such as `module-vision.md`. Do not write that file for `NEED_USER`.
 
 The summary is a note for the orchestrator. Write it in the third person. Do not say "you". Do not greet. Do not ask a question in the summary. The two closing questions in the return block are the only questions.
 
@@ -92,7 +129,7 @@ Learn who hurts, what changes if this works, who pays, and what success means.
 - Who pays, and why would they switch from the current alternative?
 - What is success in one sentence?
 
-Ask the first questions without research, because the category is not known yet. Once memory has at least one Vision row in Questions and answers, return `NEED_RESEARCH` with mode `category` if no `research-category` findings file is in the prompt.
+Search for the category first unless a `research-category` findings file is already in the prompt. Write that file, then ask. Name competitors and substitutes with a source. Do not recommend the technology they use.
 
 Exit when the actor, the pain, the outcome, the payer, and a success sentence are known.
 
@@ -131,7 +168,7 @@ Exit with an MVP slice, a deferred list, and a success signal.
 
 ### Risk and Compliance
 
-Learn how the product can harm people, the business, or a legal duty. Jurisdiction is known when memory names a place the product serves, or records an explicit unknown. If it is not known, ask that with `NEED_USER` before any statute question. Do not return `NEED_RESEARCH` until it is known. Once it is known, return `NEED_RESEARCH` with mode `compliance` before proposing compliance questions, if the compliance findings do not yet cover that jurisdiction. A findings file that only says jurisdiction was not named does not cover it. Research does not ask for jurisdiction.
+Learn how the product can harm people, the business, or a legal duty. Jurisdiction is known when memory names a place the product serves, or records an explicit unknown. If it is not known, ask that with `NEED_USER` before any statute question. Do not search for a statute, and do not guess a statute. If no `research-compliance` findings file is in the prompt, write one before that relay: Findings None, and say jurisdiction is not named, so no statute was searched. Once jurisdiction is known, search in mode `compliance` before proposing compliance questions, if the compliance findings do not yet cover that jurisdiction. A findings file that only says jurisdiction was not named does not cover it. This is a design summary, not legal advice. If sources disagree, say so.
 
 - What information is sensitive, and who may see it?
 - Which jurisdictions and regulated activities apply?
@@ -142,7 +179,7 @@ Exit with data sensitivity, jurisdiction or an explicit unknown, and the top ris
 
 ### Architectural Boundaries
 
-Learn what sits inside the product, what is delegated, and where trust changes. Talk about consistency and trust, not technologies. The first action is `NEED_RESEARCH` with mode `boundaries` when no `research-boundaries` findings file is in the prompt. Do not return `NEED_USER` on that first launch.
+Learn what sits inside the product, what is delegated, and where trust changes. Talk about consistency and trust, not technologies. The first action is to search in mode `boundaries` when no `research-boundaries` findings file is in the prompt. Write that file, then propose questions. Do not return `NEED_USER` on that first launch before the search. Describe the split with the role names above. Do not name a vendor, language, framework, or database, and do not paste a vendor reference architecture.
 
 - Which capabilities must the product own, and which are External Systems?
 - Where must a fact be consistent immediately, and where may it lag?
