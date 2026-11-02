@@ -414,3 +414,80 @@ Three rules changed. `metadata.protocol` stays "1". `prdfy` is 2.2.0. `prdfy-mod
 - An answer of Unknown is an assumption row. In `prdfy-module`, when the user answers Unknown, or the reply does not decide an exit item, the return includes an `A-` row with assumption "Unknown" and status open, using the next free `A-` id. In `prdfy`, under Relay and under Run the six modules, an Unknown relay answer still writes the module's returned assumption rows into memory. The orchestrator does not invent the row.
 
 `quick_validate.py` reported valid for both skills. `scripts/check_skills.py` reported protocol 1. `pytest tests -q` reported 27 passed.
+
+## Research-into-Module trial
+
+Third run of the gating scenario evals, after `reviews/prdfy-fix-plan-4.md`. Change 1 recorded Verifier and Review keep-reasons and added eval 8. Change 2 recorded the Writer/C4 non-merge (no skill change). Change 3 folded category, compliance, and boundaries search into `prdfy-module` and kept `prdfy-research` for pressure-test only. `NEED_RESEARCH` was dropped from Module and from the orchestrator interview flow. Protocol stays `"1"`.
+
+Eval 3 expectation 1 was rewritten before this run: Vision now searches on the first turn, so a `research-category` file is expected when search is unavailable.
+
+### Method
+
+Five fresh runners, one per eval (1, 3, 4, 6, 8). Each working folder is under `C:\tmp\prdfy-evals-2026-11-02\research-into-module\eval-<id>\`, outside the repo. The eval's `evals/files/<name>/` was copied into that folder's `prdfy-spec/` before launch. Runners were not shown the expectations. None of them could launch sub-agents, so every run used the inline fallback. The warning was given once, at the start of the first inline step. Launch-count was not measured: there is no sub-agent host to count launches. Scratch output stayed in those folders. Skills were read from `c:\repos\Prdfy\.agents\skills\`.
+
+### Pass counts
+
+| Eval | Before | After |
+| --- | --- | --- |
+| 1 Open the interview | 6/6 | 6/6 |
+| 3 No web search | 3/3 | 3/3 |
+| 4 Risk, no jurisdiction | 4/4 | 4/4 |
+| 6 Verify business plan | 4/4 | 4/4 |
+| 8 Review close-out | n/a | 4/4 |
+| These five | 17/17 | 21/21 |
+
+Eval 3's after count uses the rewritten expectation 1. Eval 1 and eval 4 did not regress, so the Research-into-Module merge shipped. No revert.
+
+Remaining failures on this trial: none. Eval 2's older Env fail (A- rows from a separate Module sub-agent) was not rerun; this host still cannot launch sub-agents.
+
+### Eval 1: open the interview, technology recorded as a Rule (6/6)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| memory.md has a Rules row with an R- ID quoting PostgreSQL and React | PASS | `R-001` quotes PostgreSQL. `R-002` quotes React. Unprompted quotes both. |
+| Reply asks 2–4 questions, all about Vision | PASS | Four questions: what happens today, what is different, who pays, success. Active module is Vision. |
+| At most four suggestions each, presented as suggestions | PASS | Four, four, four, then three. "These are suggestions, not decisions." |
+| Does not open Scope or later | PASS | No Scope questions. Progress Active module: Vision. |
+| No file uses PostgreSQL or React as a role, container, or component | PASS | Hits are Rules, Unprompted, and a reply line that they will not name a role. |
+| Orchestrator did not search or write findings itself | PASS (weak) | `research-category.md` was written by the inline Module role. `prdfy-research` was not used. The same runner played both roles. |
+
+Vision searched first, then asked. That is the post-merge path.
+
+### Eval 3: no web search available (3/3)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| research-category.md exists, Unverified yes because search was unavailable | PASS | `findings/research-category.md`. Findings: None. Unverified: `yes, because web search is unavailable`. |
+| No unsourced market size, statistic, price, or named competitor | PASS | No market claim in memory or the reply. Suggestions are labelled user or assumption. |
+| The reply asks between two and four Vision questions | PASS | Four Vision questions. |
+
+### Eval 4: Risk and Compliance with no jurisdiction (4/4)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| Reply asks which jurisdictions the product serves | PASS | First question: "Which jurisdictions does this product serve?" |
+| 2–4 questions in total | PASS | Four. |
+| No file names a statute or regulation | PASS | `research-compliance.md` says jurisdiction is not named, so no statute was searched. A scan of the scratch folder found no statute name. |
+| A research-compliance findings file was written | PASS | `findings/research-compliance.md`, Findings: None. Written by the inline Module role, not `prdfy-research`. |
+
+### Eval 6: verify the business plan (4/4)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| findings/verify-01-business-plan.md exists | PASS | Written in the scratch `prdfy-spec/findings/`. |
+| Its verdict is PASS | PASS | Verdict PASS. Two minor issues; no major. |
+| It does not report Hallkeeper as a forbidden vendor or technology name | PASS | Hallkeeper is accepted as a competitor from research-category.md. |
+| The orchestrator did not edit 01-business-plan.md | PASS | sha256 `1412d91513ac9897867428c72c0840f6e9285e764d59e9b88983f040d8195e40` matches the fixture. |
+
+### Eval 8: Review close-out (4/4)
+
+| Expectation | Result | Evidence |
+| --- | --- | --- |
+| findings/review.md exists | PASS | Written in the scratch `prdfy-spec/findings/`. Lists A-001 and A-002; verify-cross PASS. |
+| Reply asks exactly two questions | PASS | Which assumption to promote or reject; which deliverable to revise. |
+| Each question includes a None option | PASS | "None. Keep the assumptions as they are." and "None. The specification is ready." |
+| The orchestrator did not edit 01-business-plan.md or any other deliverable | PASS | sha256 of `01-business-plan.md` matches the fixture. No other deliverable was written. |
+
+### Artifacts (outside the repo)
+
+`C:\tmp\prdfy-evals-2026-11-02\research-into-module\eval-<id>\` holds `prdfy-spec/`, `reply.md`, and `run-notes.md` for evals 1, 3, 4, 6, and 8.
